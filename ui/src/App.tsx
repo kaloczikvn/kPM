@@ -15,10 +15,12 @@ import { GameTypes } from './helpers/GameTypes';
 import { Teams } from "./helpers/Teams";
 import { Player, Players } from "./helpers/Player";
 
+import GameEndInfoBox from "./components/GameEndInfoBox";
+import BombPlantInfoBox from "./components/BombPlantInfoBox";
+import PlantOrDefuseProgress from "./components/PlantOrDefuseProgress";
 
 import './Animations.scss';
 import './Global.scss';
-import GameEndInfoBox from "./components/GameEndInfoBox";
 
 const App: React.FC = () => {
     /*
@@ -60,11 +62,18 @@ const App: React.FC = () => {
     const [winningTeam, setWinningTeam] = useState<Teams>(Teams.Attackers);
     const [teamAttackersScore, setTeamAttackersScore] = useState<number>(0);
     const [teamDefendersScore, setTeamDefendersScore] = useState<number>(0);
+    const [bombPlantedOn, setBombPlantedOn] = useState<string|null>(null);
 
-    window.UpdateHeader = function (p_AttackerPoints: number, p_DefenderPoints: number, p_Rounds: number) {
+    window.UpdateHeader = function (p_AttackerPoints: number, p_DefenderPoints: number, p_Rounds: number, p_BombSite?: string) {
         setTeamAttackersScore(p_AttackerPoints);
         setTeamDefendersScore(p_DefenderPoints);
         setRound(p_Rounds);
+
+        if (p_BombSite === undefined || p_BombSite === null || p_BombSite === 'nil') {
+            setBombPlantedOn(null);
+        } else {
+            setBombPlantedOn(p_BombSite.toString());
+        }
     }
 
     const [showTeamsPage, setShowTeamsPage] = useState<boolean>(false);
@@ -149,6 +158,11 @@ const App: React.FC = () => {
             setGameWinningTeam(Teams.Defenders);
         }
     }
+
+    const [bombPlanted, setBombPlanted] = useState<string|null>(null);
+    window.BombPlanted = function (p_BombSite: string|null) {
+        setBombPlanted(p_BombSite)
+    }
     
     window.OpenCloseScoreboard = function (open: boolean) {
         if (!showTeamsPage && !showLoadoutPage) {
@@ -185,6 +199,21 @@ const App: React.FC = () => {
         setRupProgress(Math.round(m_RupHeldTime / MaxReadyUpTime * 100));
     }
 
+    const [plantProgress, setPlantProgress] = useState<number>(0);
+    const [plantOrDefuse, setPlantOrDefuse] = useState<string>("plant");
+    window.PlantInteractProgress = function(m_PlantOrDefuseHeldTime: number, PlantTime: number, plantOrDefuse: string) {
+        if (plantOrDefuse === 'none') {
+            setPlantProgress(0);
+            setPlantOrDefuse("plant");
+    
+        } else {
+            setPlantProgress(Math.round(m_PlantOrDefuseHeldTime / PlantTime * 100));
+            setPlantOrDefuse(plantOrDefuse);
+        }
+        
+        console.log(m_PlantOrDefuseHeldTime, PlantTime, plantOrDefuse)
+    }
+
     const GameStatesPage = () => {
         switch (scene) {
             default:
@@ -213,6 +242,10 @@ const App: React.FC = () => {
             
             {debugMode &&
                 <style dangerouslySetInnerHTML={{__html: `
+                    body {
+                        background: #8e8e8e;
+                    }
+
                     #debug {
                         display: block !important;
                     }
@@ -228,6 +261,7 @@ const App: React.FC = () => {
                 <button onClick={() => setShowRoundEndInfoBox(prevState => !prevState)}>RoundEndInfo On / Off</button>
                 <button onClick={() => setGameWon(true)}>setGameWon</button>
                 <button onClick={() => setGameWinningTeam(Teams.Attackers)}>Attackers won the game</button>
+                <button onClick={() => setBombPlantedOn("B")}>Set bomb planted</button>
                 <br />
                 <button onClick={() => setRoundWon(true)}>Win</button>
                 <button onClick={() => setRoundWon(false)}>Lose</button>
@@ -247,6 +281,7 @@ const App: React.FC = () => {
                     teamDefendersClan=""
                     round={round}
                     gameType={gameType}
+                    bombPlantedOn={bombPlantedOn}
                 />
                 <GameStatesPage />
                 <TeamsScene
@@ -265,6 +300,14 @@ const App: React.FC = () => {
                     players={players}
                     gameState={scene}
                 />
+                <PlantOrDefuseProgress 
+                    plantProgress={plantProgress}
+                    plantOrDefuse={plantOrDefuse}
+                />
+                
+                {bombPlanted !== null &&
+                    <BombPlantInfoBox bombSite={bombPlanted} afterAudio={() => setBombPlanted(null)} />
+                }
 
                 {gameWon !== null 
                 ?
@@ -300,9 +343,11 @@ declare global {
         UpdatePlayers: (p_Players: any, p_ClientPlayer: any) => void;
         OpenCloseScoreboard: (open: boolean) => void;
         RupInteractProgress: (m_RupHeldTime: number, MaxReadyUpTime: number) => void
-        UpdateHeader: (p_AttackerPoints: number, p_DefenderPoints: number, p_Rounds: number) => void;
+        UpdateHeader: (p_AttackerPoints: number, p_DefenderPoints: number, p_Rounds: number, p_BombSite?: string) => void;
         ShowHideRoundEndInfoBox: (open: boolean) => void;
         UpdateRoundEndInfoBox: (p_RoundWon: boolean, p_WinningTeam: string) => void;
         SetGameEnd: (p_GameWon: boolean, p_WinningTeam: string) => void;
+        BombPlanted: (p_BombSite: string|null) => void;
+        PlantInteractProgress: (m_PlantOrDefuseHeldTime: number, PlantTime: number, plantOrDefuse: string) => void
     }
 }

@@ -78,6 +78,10 @@ function Match:__init(p_Server, p_TeamAttackers, p_TeamDefenders, p_RoundCount, 
 
     self.m_GameType = p_GameType
 
+    self.m_BombSite = nil
+    self.m_BombLocation = nil
+    self.m_BombTime = nil
+
     print("init: " .. self.m_UpdateTicks[GameStates.EndGame])
 end
 
@@ -336,6 +340,10 @@ function Match:OnFirstHalf(p_DeltaTime)
 
         -- Respawn all players
         self:SpawnAllPlayers(false)
+
+        self.m_BombSite = nil
+        self.m_BombLocation = nil
+        self.m_BombTime = nil
         
         NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
 
@@ -359,9 +367,8 @@ function Match:OnFirstHalf(p_DeltaTime)
         -- The round is running as expected, check the ending conditions
 
         -- Which are if all attackers are dead
-        if s_AttackerAliveCount == 0 then
-            print("all attackers are dead, round is over")
-
+        if s_AttackerAliveCount == 0 and self.m_BombSite == nil and self.m_BombLocation == nil and self.m_BombTime == nil then
+            print("all attackers are dead and the bomb is not planted, round is over")
             -- Give a round to the defenders
             self.m_Defenders:RoundWon(self.m_CurrentRound)
 
@@ -405,29 +412,47 @@ function Match:OnFirstHalf(p_DeltaTime)
         end
 
         -- If the round is over
-        if self.m_UpdateTicks[GameStates.FirstHalf] >= kPMConfig.MaxRoundTime then
-            -- If the defenders have any players alive, they win, simple
-            if s_DefenderAliveCount > 0 then
-                self.m_Defenders:RoundWon(self.m_CurrentRound)
-                self.m_Attackers:RoundLoss(self.m_CurrentRound)
+        if self.m_BombSite == nil and self.m_BombLocation == nil and self.m_BombTime == nil then
+            if self.m_UpdateTicks[GameStates.FirstHalf] >= kPMConfig.MaxRoundTime then
+                -- If the defenders have any players alive, they win, simple
+                if s_DefenderAliveCount > 0 then
+                    self.m_Defenders:RoundWon(self.m_CurrentRound)
+                    self.m_Attackers:RoundLoss(self.m_CurrentRound)
 
-                self.m_Server:SetRoundEndInfoBox(self.m_Defenders:GetTeamId())
-            else
+                    self.m_Server:SetRoundEndInfoBox(self.m_Defenders:GetTeamId())
+                else
+                    self.m_Attackers:RoundWon(self.m_CurrentRound)
+                    self.m_Defenders:RoundLoss(self.m_CurrentRound)
+
+                    self.m_Server:SetRoundEndInfoBox(self.m_Attackers:GetTeamId())
+                end
+
+                -- Update the round count
+                self.m_CurrentRound = self.m_CurrentRound + 1
+
+                self:IsRoundHalfTime()
+
+                -- Leave the timer at 0.0 in the same state, it will catch at the top
+                -- of this function and enable strat mode
+                self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+                return
+            end
+        else
+            if self.m_UpdateTicks[GameStates.FirstHalf] >= self.m_BombTime then
                 self.m_Attackers:RoundWon(self.m_CurrentRound)
                 self.m_Defenders:RoundLoss(self.m_CurrentRound)
-
                 self.m_Server:SetRoundEndInfoBox(self.m_Attackers:GetTeamId())
+    
+                -- Update the round count
+                self.m_CurrentRound = self.m_CurrentRound + 1
+    
+                self:IsRoundHalfTime()
+    
+                -- Leave the timer at 0.0 in the same state, it will catch at the top
+                -- of this function and enable strat mode
+                self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+                return
             end
-
-            -- Update the round count
-            self.m_CurrentRound = self.m_CurrentRound + 1
-
-            self:IsRoundHalfTime()
-
-            -- Leave the timer at 0.0 in the same state, it will catch at the top
-            -- of this function and enable strat mode
-            self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
-            return
         end
     end
 
@@ -465,8 +490,12 @@ function Match:OnSecondHalf(p_DeltaTime)
 
         -- Respawn all players
         self:SpawnAllPlayers(false)
+
+        self.m_BombSite = nil
+        self.m_BombLocation = nil
+        self.m_BombTime = nil
         
-        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound, "nil")
 
         -- Manually update the ticks
         self.m_UpdateTicks[GameStates.SecondHalf] = self.m_UpdateTicks[GameStates.SecondHalf] + p_DeltaTime
@@ -488,8 +517,8 @@ function Match:OnSecondHalf(p_DeltaTime)
         -- The round is running as expected, check the ending conditions
 
         -- Which are if all attackers are dead
-        if s_AttackerAliveCount == 0 then
-            print("all attackers are dead, round is over")
+        if s_AttackerAliveCount == 0 and self.m_BombSite == nil and self.m_BombLocation == nil and self.m_BombTime == nil then
+            print("all attackers are dead and the bomb is not planted, round is over")
 
             -- Give a round to the defenders
             self.m_Defenders:RoundWon(self.m_CurrentRound)
@@ -534,29 +563,47 @@ function Match:OnSecondHalf(p_DeltaTime)
         end
 
         -- If the round is over
-        if self.m_UpdateTicks[GameStates.SecondHalf] >= kPMConfig.MaxRoundTime then
-            -- If the defenders have any players alive, they win, simple
-            if s_DefenderAliveCount > 0 then
-                self.m_Defenders:RoundWon(self.m_CurrentRound)
-                self.m_Attackers:RoundLoss(self.m_CurrentRound)
-
-                self.m_Server:SetRoundEndInfoBox(self.m_Defenders:GetTeamId())
-            else
+        if self.m_BombSite == nil and self.m_BombLocation == nil and self.m_BombTime == nil then
+            if self.m_UpdateTicks[GameStates.SecondHalf] >= kPMConfig.MaxRoundTime then
+                -- If the defenders have any players alive, they win, simple
+                if s_DefenderAliveCount > 0 then
+                    self.m_Defenders:RoundWon(self.m_CurrentRound)
+                    self.m_Attackers:RoundLoss(self.m_CurrentRound)
+    
+                    self.m_Server:SetRoundEndInfoBox(self.m_Defenders:GetTeamId())
+                else
+                    self.m_Attackers:RoundWon(self.m_CurrentRound)
+                    self.m_Defenders:RoundLoss(self.m_CurrentRound)
+    
+                    self.m_Server:SetRoundEndInfoBox(self.m_Attackers:GetTeamId())
+                end
+    
+                -- Update the round count
+                self.m_CurrentRound = self.m_CurrentRound + 1
+    
+                self:IsAnyTeamWon()
+    
+                -- Leave the timer at 0.0 in the same state, it will catch at the top
+                -- of this function and enable strat mode
+                self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+                return
+            end
+        else
+            if self.m_UpdateTicks[GameStates.SecondHalf] >= self.m_BombTime then
                 self.m_Attackers:RoundWon(self.m_CurrentRound)
                 self.m_Defenders:RoundLoss(self.m_CurrentRound)
-
                 self.m_Server:SetRoundEndInfoBox(self.m_Attackers:GetTeamId())
+    
+                -- Update the round count
+                self.m_CurrentRound = self.m_CurrentRound + 1
+    
+                self:IsAnyTeamWon()
+    
+                -- Leave the timer at 0.0 in the same state, it will catch at the top
+                -- of this function and enable strat mode
+                self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+                return
             end
-
-            -- Update the round count
-            self.m_CurrentRound = self.m_CurrentRound + 1
-
-            self:IsAnyTeamWon()
-
-            -- Leave the timer at 0.0 in the same state, it will catch at the top
-            -- of this function and enable strat mode
-            self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
-            return
         end
     end
 
@@ -567,13 +614,13 @@ end
 function Match:IsAnyTeamWon()
     if self.m_Attackers:CountRoundWon() >= (self.m_RoundCount / 2 + 1) or 
         self.m_Defenders:CountRoundWon() >= (self.m_RoundCount / 2 + 1) then
-        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound, "nil")
         self.m_Server:ChangeGameState(GameStates.EndGame)
         return
     end
 
     if self.m_CurrentRound >= self.m_RoundCount then
-        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound, "nil")
         self.m_Server:ChangeGameState(GameStates.EndGame)
         return
     end
@@ -639,7 +686,7 @@ function Match:OnStrat(p_DeltaTime)
 end
 
 function Match:DisablePlayerInputs()
-    local s_Players = PlayerManager:GetPlayers()
+    --[[local s_Players = PlayerManager:GetPlayers()
     for l_Index, l_Player in ipairs(s_Players) do
         l_Player:EnableInput(EntryInputActionEnum.EIAFire, false)
         l_Player:EnableInput(EntryInputActionEnum.EIAJump, false)
@@ -649,11 +696,12 @@ function Match:DisablePlayerInputs()
         l_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, false)
         l_Player:EnableInput(EntryInputActionEnum.EIAChangePose, false)
         l_Player:EnableInput(EntryInputActionEnum.EIAProne, false)
-    end
+    end]]
+    NetEvents:Broadcast("kPM:DisablePlayerInputs")
 end
 
 function Match:EnablePlayerInputs()
-    local s_Players = PlayerManager:GetPlayers()
+    --[[local s_Players = PlayerManager:GetPlayers()
     for l_Index, l_Player in ipairs(s_Players) do
         l_Player:EnableInput(EntryInputActionEnum.EIAFire, true)
         l_Player:EnableInput(EntryInputActionEnum.EIAJump, true)
@@ -663,12 +711,74 @@ function Match:EnablePlayerInputs()
         l_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, true)
         l_Player:EnableInput(EntryInputActionEnum.EIAChangePose, true)
         l_Player:EnableInput(EntryInputActionEnum.EIAProne, true)
-    end
+    end]]
+    NetEvents:Broadcast("kPM:EnablePlayerInputs")
 end
 
 function Match:ClearReadyUpState()
     -- Clear out all ready up state entries
     self.m_ReadyUpPlayers = { }
+end
+
+function Match:OnTogglePlant(p_Player, p_PlantOrDefuse, p_BombSite, p_BombLocation, p_Force)
+    if p_PlantOrDefuse == "plant" then
+        if p_Player.teamId ~= self.m_Attackers:GetTeamId() then
+            if p_Force == nil then
+                return
+            end
+        end
+
+        if p_BombSite == nil or p_BombLocation == nil then
+            return
+        end 
+
+        if self.m_BombSite ~= nil or self.m_BombLocation ~= nil then
+            -- If the bomb already planted return
+            return
+        end
+
+        self.m_BombSite = p_BombSite
+        self.m_BombLocation = p_BombLocation
+        if self.m_CurrentState == GameStates.FirstHalf then
+            self.m_BombTime = self.m_UpdateTicks[GameStates.FirstHalf] + kPMConfig.BombTime
+        elseif self.m_CurrentState == GameStates.SecondHalf then
+            self.m_BombTime = self.m_UpdateTicks[GameStates.SecondHalf] + kPMConfig.BombTime
+        end
+
+        print('info: bomb has been planted on ' .. p_BombSite)
+
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound, p_BombSite)
+
+        -- Notify players that the bomb has been planted and start the timer
+        self.m_Server:SetClientTimer(kPMConfig.BombTime)
+        NetEvents:Broadcast('kPM:BombPlanted', p_BombSite, p_BombLocation)
+    elseif p_PlantOrDefuse == "defuse" then
+        if p_Player.teamId ~= self.m_Defenders:GetTeamId() then
+            return
+        end
+
+        if self.m_BombSite == nil or self.m_BombLocation == nil then
+            return
+        end
+
+        print('info: bomb has been defused')
+
+        -- Notify players that the bomb has been defused and end the round
+        NetEvents:Broadcast('kPM:BombDefused')
+
+        self.m_Defenders:RoundWon(self.m_CurrentRound)
+        self.m_Attackers:RoundLoss(self.m_CurrentRound)
+        self.m_CurrentRound = self.m_CurrentRound + 1
+        self.m_Server:SetRoundEndInfoBox(self.m_Defenders:GetTeamId())
+
+        if self.m_CurrentState == GameStates.FirstHalf then
+            self:IsRoundHalfTime()
+            self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+        elseif self.m_CurrentState == GameStates.SecondHalf then
+            self:IsAnyTeamWon()
+            self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+        end
+    end
 end
 
 function Match:OnPlayerRup(p_Player)
@@ -859,14 +969,6 @@ function Match:SpawnAllPlayers(p_KnifeOnly)
             goto _knife_continue_
         end
 
-        --[[self:SpawnPlayer(
-            l_Player, 
-            self:GetRandomSpawnpoint(l_Player), 
-            CharacterPoseType.CharacterPoseType_Stand, 
-            s_SoldierBlueprint, 
-            p_KnifeOnly,
-            self.m_LoadoutManager:GetPlayerLoadout(l_Player)
-        )]]
         self:AddPlayerToSpawnQueue(
             l_Player, 
             self:GetRandomSpawnpoint(l_Player), 

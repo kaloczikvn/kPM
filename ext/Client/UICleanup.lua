@@ -8,6 +8,8 @@ function UICleanup:__init()
 
         if screen.name == 'UI/Flow/Screen/SpawnScreenPC' or
             screen.name == 'UI/Flow/Screen/SpawnScreenTicketCounterTDMScreen' or
+            --screen.name == 'UI/Flow/Screen/Scoreboards/ScoreboardTwoTeamsScreen' or
+            screen.name == 'UI/Flow/Screen/Scoreboards/ScoreboardTwoTeamsHUD32Screen' or
             screen.name == 'UI/Flow/Screen/KillScreen' or
             screen.name == 'UI/Flow/Screen/SpawnButtonScreen' then
             hook:Return(nil)

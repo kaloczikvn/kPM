@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { GameStates, GameStatesRoundString } from "./helpers/GameStates";
 import { GameTypes, GameTypesString } from './helpers/GameTypes';
-import CountDown from "./components/CountDown";
+import { useTimer } from "react-compound-timer/build/hook/useTimer";
 
 import './Header.scss';
 
@@ -14,14 +14,17 @@ interface Props {
     round: number|null;
     showHud: boolean;
     gameType: GameTypes;
+    bombPlantedOn: string|null;
 }
 
-const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAttackersScore, teamDefendersScore, currentScene, round, showHud, gameType }) => {
-    const [ time, setTime ] = useState<number>(0);
-
+const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAttackersScore, teamDefendersScore, currentScene, round, showHud, gameType, bombPlantedOn }) => {
     window.SetTimer = function(p_Time: number) {
-        setTime(p_Time - 1); //Hacky stuff, -1 sec is needed to show accurate time
+        setTime(1000 * p_Time);
+        start();
+        reset();
     }
+
+    const { value, controls: { setTime, reset, start }} = useTimer({ initialTime: 0, direction: "backward", startImmediately: false });
 
     return (
         <>
@@ -29,10 +32,14 @@ const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAtt
                 Promod
             </div>
 
+            <div id="promodVersion">
+                v 0.7
+            </div>
+
             <div id="debug">
-                <button onClick={() => setTime(300)}>300 sec</button>
-                <button onClick={() => setTime(200)}>200 sec</button>
-                <button onClick={() => setTime(100)}>100 sec</button>
+                <button onClick={() => window.SetTimer(300)}>300 sec</button>
+                <button onClick={() => window.SetTimer(200)}>200 sec</button>
+                <button onClick={() => window.SetTimer(100)}>100 sec</button>
             </div>
 
             {showHud &&
@@ -51,10 +58,12 @@ const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAtt
                             <span className="points">{teamAttackersScore??0}</span>
                         </div>
                         <div id="roundTimer">
-                            <span className="timer">
-                                {(time > 0)
+                            <span className={"timer " + (bombPlantedOn !== null ? 'planted' : '')}>
+                                {(value !== null)
                                 ?
-                                    <CountDown time={time} />
+                                    <>
+                                        {(value.m < 10 ? `0${value.m}` : value.m)}:{(value.s < 10 ? `0${value.s}` : value.s)}
+                                    </>
                                 :
                                     <>
                                         00:00
@@ -62,7 +71,16 @@ const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAtt
                                 }
                             </span>
                             <span className="round">
-                                {GameStatesRoundString[currentScene].replace('{round}', (round?.toString()??'1'))??''}
+                                {bombPlantedOn !== null 
+                                ?
+                                    <>
+                                        Bomb on {bombPlantedOn}
+                                    </>
+                                :
+                                    <>
+                                        {GameStatesRoundString[currentScene].replace('{round}', (round?.toString()??'1'))??''}
+                                    </>
+                                }
                             </span>
 
                             <div className="gameTypeLabel">

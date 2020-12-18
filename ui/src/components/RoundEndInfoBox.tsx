@@ -26,7 +26,7 @@ const RoundEndInfoBox: React.FC<Props> = ({ roundWon, winningTeam, afterDisaper 
             {show &&
                 <div className={"roundEndInfoBox fadeInTop " + ((winningTeam === Teams.Attackers) ? 'defenders' : 'attackers')}>
                     <h2>Round {roundWon ? 'Won' : 'Lost'}</h2>
-                    <h1>{(winningTeam === Teams.Attackers) ? 'Defenders' : 'Attackers'} eliminated</h1>
+                    <h1>{(winningTeam === Teams.Attackers) ? 'Attackers' : 'Defenders'} won</h1>
                 </div>
             }
         </>

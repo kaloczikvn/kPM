@@ -225,6 +225,39 @@ h6 {
         font-size: 0.85vw;
         font-weight: 300;
     }
+
+    &.plantOrDefuse {
+        height: 9.5vh;
+
+        &.plant {
+            border: .15vw solid var(--primary);
+
+            .rupProgress {
+                background: var(--primary);
+            }
+        }
+        
+        &.defuse {
+            border: .15vw solid var(--secondary);
+
+            .rupProgress {
+                background: var(--secondary);
+            }
+        }
+
+        .progressHolder {
+            position: absolute;
+            width: calc(100% - 1.5vw);
+            height: 1.5vh;
+            top: 1.5vh;
+            left: .75vw;
+            background: #fff;
+        }
+
+        h1 {
+            margin: 2.5vh 0 0;
+        }
+    }
 }
 
 .roundEndInfoBox {

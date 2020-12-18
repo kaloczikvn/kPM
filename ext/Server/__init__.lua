@@ -70,6 +70,7 @@ function kPMServer:RegisterEvents()
 
     -- Events from the client
     self.m_ToggleRupEvent = NetEvents:Subscribe("kPM:ToggleRup", self, self.OnToggleRup)
+    self.m_TogglePlantEvent = NetEvents:Subscribe("kPM:TogglePlant", self, self.OnTogglePlant)
     -- TODO: This is a debug only function
     self.m_ForceToggleRupEvent = NetEvents:Subscribe("kPM:ForceToggleRup", self, self.OnForceToggleRup)
     self.m_PlayerConnectedEvent = NetEvents:Subscribe("kPM:PlayerConnected", self, self.OnPlayerConnected)
@@ -350,6 +351,25 @@ function kPMServer:OnForceToggleRup(p_Player)
     self.m_Match:ForceAllPlayerRup()
 end
 
+function kPMServer:OnTogglePlant(p_Player, p_PlantOrDefuse, p_BombSite, p_BombLocation, p_Force)
+    -- Check to see if we have a valid player
+    if p_Player == nil then
+        print("err: invalid player tried to " .. p_PlantOrDefuse)
+        return
+    end
+
+    if p_BombSite == nil then
+        print("err: invalid bombsite")
+        return
+    end
+
+    if self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf then
+        self.m_Match:OnTogglePlant(p_Player, p_PlantOrDefuse, p_BombSite, p_BombLocation, p_Force)
+    else
+        print("err: player " .. p_Player.name .. " tried to " .. p_PlantOrDefuse .. " in non-round?")
+    end
+end
+
 function kPMServer:OnPlayerChat(p_Player, p_RecipientMask, p_Message)
     -- Check the player
     if p_Player == nil then
@@ -446,7 +466,6 @@ function kPMServer:SetupVariables()
         ["vars.roundStartPlayerCount"] = "0",
         ["vars.roundRestartPlayerCount"] = "0",
         ["vars.hud"] = "true",
-        ["vars.killCam"] = "false",
         ["vu.SquadSize"] = tostring(kPMConfig.SquadSize),
         ["vu.ColorCorrectionEnabled"] = "false",
         ["vu.SunFlareEnabled"] = "false",

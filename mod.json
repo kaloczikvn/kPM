@@ -1,8 +1,9 @@
 {
     "Name": "kPM",
-    "Description": "Competitive mod",
-    "Authors": [ "kiwidog" ],
-    "Version": "1.0.0",
+    "Description": "Promod for competitive Battlefield 3 experience.",
+    "Authors": [ "kiwidog", "KVN" ],
+    "Tags": [ "promod" ],
+    "Version": "0.7.0",
     "HasVeniceEXT": true,
     "HasWebUI": true,
     "Dependencies": {

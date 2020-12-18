@@ -6,3 +6,44 @@
     left: 0;
     z-index: 1;
 }
+
+#tutorial {
+    position: absolute;
+    bottom: 25.5vh;
+    left: 3.5vh;
+    display: flex;
+    flex-flow: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+
+    .keyHolder {
+        text-align: center;
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        justify-content: center;
+
+        span {
+            border: .1vw solid #fff;
+            border-radius: .45vw;
+            width: 2.5vw;
+            height: 2.5vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1vw;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        h3 {
+            font-size: 1.1vw;
+            font-weight: 400;
+            margin-left: .8vw;
+        }
+
+        &.keyF10 {
+            margin-top: 2vh;
+        }
+    }
+}

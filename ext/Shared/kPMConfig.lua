@@ -14,9 +14,6 @@ kPMConfig =
     -- Maximum Ready up time
     MaxReadyUpTime = 1.5,
 
-    -- Maximum Plant time
-    PlantTime = 5.0,
-
     -- When up tick rup game logic
     MaxRupTick = 1.0,
 
@@ -62,4 +59,10 @@ kPMConfig =
 
     -- Default gametype is GameTypes.Public
     GameType = GameTypes.Public,
+
+    -- Bomb related stuff
+    BombRadius = 1.5,
+    BombTime = 45.0,
+    PlantTime = 5.0,
+    DefuseTime = 5.0,
 }

@@ -14,6 +14,21 @@
     padding: 0 0.5vh;
 }
 
+#promodVersion {
+    position: absolute;
+    top: 13.5vh;
+    right: 3.5vh;
+    z-index: 99999;
+    opacity: .2;
+    text-align: center;
+    color: #ffffff;
+    display: block;
+    font-weight: 300;
+    font-size: 1.4vh;
+    padding: 0 0.5vh;
+}
+
+
 #inGameHeader {
     position: absolute;
     top: 0;
@@ -96,6 +111,10 @@
                     font-size: 1.8vw;
                     line-height: 1;
                     font-weight: 600;
+
+                    &.planted {
+                        color: var(--primary);
+                    }
                 }
 
                 .round {

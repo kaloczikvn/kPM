@@ -18,7 +18,7 @@ export enum GameStates {
 export var GameStatesRoundString = {
     [GameStates.None]: '',
     [GameStates.Warmup]: 'Warmup',
-    [GameStates.WarmupToKnife]: 'Pre-Knife',
+    [GameStates.WarmupToKnife]: 'Pre-Round',
     [GameStates.KnifeRound]: 'Knife',
     [GameStates.KnifeToFirst]: 'First Half',
     [GameStates.FirstHalf]: 'Round {round}',

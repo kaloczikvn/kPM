@@ -36,7 +36,7 @@ MapsConfig =
                 Vec3(0, 0, 1), 
                 Vec3(-341.6533203125, 71.388473510742, 297.3525390625)
             ),
-            RADIUS = 7,
+            RADIUS = 5,
         },
     
         PLANT_B = {
@@ -46,7 +46,7 @@ MapsConfig =
                 Vec3(0, 0, 1), 
                 Vec3(-299.7861328125, 70.434371948242, 262.5673828125)
             ),
-            RADIUS = 7,
+            RADIUS = 5,
         },
 
         EFFECTS_WORLD_PART_DATA = {

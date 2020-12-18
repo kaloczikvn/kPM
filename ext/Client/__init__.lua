@@ -31,7 +31,13 @@ function kPMClient:__init()
     self.m_RupHeldTime = 0.0
 
     -- Plant Inputs
-    self.m_PlantHeldTime = 0.0
+    self.m_PlantOrDefuseHeldTime = 0.0
+    self.m_StartedPlantingOrDefusing = false
+    self.m_BombSite = nil
+    self.m_BombLocation = nil
+    self.m_LaptopEntity = nil
+
+    self.m_PlayerInputs = true
 
     -- Tab / Scoreboard Inputs
     self.m_TabHeldTime = 0.0
@@ -46,9 +52,12 @@ function kPMClient:__init()
     self.m_AttackersTeamId = TeamId.Team2
     self.m_DefendersTeamId = TeamId.Team1
 
+    self.m_FirstSpawn = false
+
     -- Freecamera
     self.m_FreeCam = FreeCam()
 
+    -- Start vision (black and white)
     self.m_StatVision = StratVision()
 end
 
@@ -103,8 +112,6 @@ function kPMClient:RegisterEvents()
     self.m_PlayerReadyUpPlayers = NetEvents:Subscribe("Player:ReadyUpPlayers", self, self.OnReadyUpPlayers)
     self.m_PlayerReadyUpPlayersTable = {}
 
-    self.m_UIPushScreen = Hooks:Install('UI:PushScreen', 1, self, self.OnUIPushScreen)
-
     -- Player Events
     self.m_PlayerRespawnEvent = Events:Subscribe("Player:Respawn", self, self.OnPlayerRespawn)
     self.m_PlayerKilledEvent = Events:Subscribe("Player:Killed", self, self.OnPlayerKilled)
@@ -126,9 +133,13 @@ function kPMClient:RegisterEvents()
     self.m_SetRoundEndInfoBoxEvent = NetEvents:Subscribe("kPM:SetRoundEndInfoBox", self, self.OnSetRoundEndInfoBox)
     self.m_SetGameEndEvent = NetEvents:Subscribe("kPM:SetGameEnd", self, self.OnSetGameEnd)
 
+    self.m_BombPlantedEvent = NetEvents:Subscribe("kPM:BombPlanted", self, self.OnBombPlanted)
+    self.m_BombDefusedEvent = NetEvents:Subscribe("kPM:BombDefused", self, self.OnBombDefused)
+
     self.m_UpdateTeamsEvent = NetEvents:Subscribe("kPM:UpdateTeams", self, self.OnUpdateTeams)
 
-    self.m_FirstSpawn = false
+    self.m_DisablePlayerInputsEvent = NetEvents:Subscribe("kPM:DisablePlayerInputs", self, self.OnDisablePlayerInputs)
+    self.m_EnablePlayerInputsEvent = NetEvents:Subscribe("kPM:EnablePlayerInputs", self, self.OnEnablePlayerInputs)
 
     -- Cleanup Events
     self.m_CleanupEvent = NetEvents:Subscribe("kPM:Cleanup", self, self.OnCleanup)
@@ -173,7 +184,6 @@ function kPMClient:RegisterCommands()
     self.m_PositionCommand = Console:Register("kpm_player_pos", "Displays the current player position", ClientCommands.PlayerPosition)
     self.m_ReadyUpCommand = Console:Register("kpm_ready_up", "Toggles the ready up state", ClientCommands.ReadyUp)
     self.m_ForceReadyUpCommand = Console:Register("kpm_force_ready_up", "Toggles all players to ready up state", ClientCommands.ForceReadyUp)
-    
 end
 
 function kPMClient:UnregisterCommands()
@@ -198,6 +208,11 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
         self.m_FreeCam:OnUpdateInput(p_DeltaTime)
     end
 
+    -- TODO: Remove me
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F8) then
+        NetEvents:Send("kPM:TogglePlant", "plant", "A", Vec3(-341.6533203125, 71.388473510742, 297.3525390625), true)
+    end
+
     -- Open Team menu
     if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
         -- If the player never spawned we should force him to pick a team and a loadout first
@@ -215,7 +230,7 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     end
 
     -- Manually check for toggles
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F4) then
+    --[[if InputManager:WentKeyDown(InputDeviceKeys.IDK_F4) then
         print("enabling freecam movement")
         self.m_FreeCam:OnEnableFreeCamMovement()
     end
@@ -228,7 +243,7 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     if InputManager:WentKeyDown(InputDeviceKeys.IDK_F6) then
         print("control end")
         self.m_FreeCam:OnControlEnd()
-    end
+    end]]
 end
 
 function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
@@ -238,8 +253,13 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
         return
     end
 
+    -- Get the local player id
+    local s_Player = PlayerManager:GetLocalPlayer()
+
     -- Tab held or not
     self:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
+
+    local s_SelectedPlant = self:IsPlayerInsideThePlantZone()
 
     -- Check to see if we are in the warmup state to get rup status
     if self.m_GameState == GameStates.Warmup then
@@ -259,8 +279,6 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
 
         -- Toggle the rup state
         if self.m_RupHeldTime >= kPMConfig.MaxReadyUpTime then
-            -- Get the local player id
-            local s_Player = PlayerManager:GetLocalPlayer()
             if s_Player == nil then
                 print("err: could not get local player.")
                 return
@@ -277,40 +295,60 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
             -- Reset our rup timer
             self.m_RupHeldTime = 0.0
         end
-    elseif self:IsPlayerInsideThePlantZone() and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
+    elseif s_SelectedPlant ~= nil and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
         -- Get the interact level
         local s_InteractLevel = p_Cache:GetLevel(InputConceptIdentifiers.ConceptInteract)
 
         -- If the player is holding the interact key then update our variables and clear it for the next frame
         if s_InteractLevel > 0.0 then
-            self.m_PlantHeldTime = self.m_PlantHeldTime + p_DeltaTime
+            self.m_PlantOrDefuseHeldTime = self.m_PlantOrDefuseHeldTime + p_DeltaTime
             p_Cache:SetLevel(InputConceptIdentifiers.ConceptInteract, 0.0)
+            self:DisablePlayerInputs()
         else
-            -- If the client isn't holding interact reset our time
-            self.m_PlantHeldTime = 0.0
+            self:EnablePlayerInputs()
+
+            -- If the client isn't holding interact reset our timer
+            self.m_PlantOrDefuseHeldTime = 0.0
         end
 
-        WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ");")
+        if s_Player == nil then
+            print("err: could not get local player.")
+            return
+        end
 
-        -- Toggle the rup state
-        if self.m_PlantHeldTime >= kPMConfig.PlantTime then
-            -- Get the local player id
-            local s_Player = PlayerManager:GetLocalPlayer()
-            if s_Player == nil then
-                print("err: could not get local player.")
-                return
+        if s_Player.teamId == self.m_AttackersTeamId then
+            -- If player is attacker
+            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantOrDefuseHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("plant") .. "');")
+
+            -- Toggle the plant state
+            if self.m_PlantOrDefuseHeldTime >= kPMConfig.PlantTime then
+                -- Send the plant event
+                NetEvents:Send("kPM:TogglePlant", "plant", s_SelectedPlant, s_Player.soldier.worldTransform.trans)
+                print("client planted")
+
+                -- Reset our plant or defuse timer
+                self.m_PlantOrDefuseHeldTime = 0.0
             end
+        elseif s_Player.teamId == self.m_DefendersTeamId then
+            -- If player is defender
+            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantOrDefuseHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("defuse") .. "');")
 
-            -- Get the local player id
-            local s_PlayerId = s_Player.id
+            -- Toggle the defuse state
+            if self.m_PlantOrDefuseHeldTime >= kPMConfig.DefuseTime then
+                -- Send the defuse event
+                NetEvents:Send("kPM:TogglePlant", "defuse", s_SelectedPlant)
+                print("client defused")
 
-            -- Send the toggle event to the server
-            --NetEvents:Send("kPM:ToggleRup")
-
-            print("client planted")
-
-            -- Reset our rup timer
-            self.m_PlantHeldTime = 0.0
+                -- Reset our plant or defuse timer
+                self.m_PlantOrDefuseHeldTime = 0.0
+            end
+        end
+    else 
+        if self.m_PlantOrDefuseHeldTime > 0.0 and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
+            -- Re-enable inputs after planting
+            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(0) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("defuse") .. "');")
+            self:EnablePlayerInputs()
+            self.m_PlantOrDefuseHeldTime = 0
         end
     end
 
@@ -349,7 +387,6 @@ function kPMClient:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
         self.m_TabHeldTime = 0.0
     end
 
-
     if self.m_ScoreboardActive ~= l_ScoreboardActive then
         self.m_ScoreboardActive = l_ScoreboardActive
 
@@ -383,16 +420,6 @@ function kPMClient:OnRupStateChanged(p_WaitingOnPlayers, p_LocalRupStatus)
     self:OnUpdateScoreboard(l_Player)
 end
 
-function kPMClient:OnUIPushScreen(hook, screen, graphPriority, parentGraph)
-    local screen = UIGraphAsset(screen)
-    if screen.name == 'UI/Flow/Screen/Scoreboards/ScoreboardTwoTeamsScreen' or
-        screen.name == 'UI/Flow/Screen/Scoreboards/ScoreboardTwoTeamsHUD32Screen'
-    then
-        hook:Return(nil)
-        return
-    end
-end
-
 function kPMClient:OnPlayerPing(p_PingTable)
     self.m_PingTable = p_PingTable
 end
@@ -416,6 +443,11 @@ function kPMClient:OnGameStateChanged(p_OldGameState, p_GameState)
 
     print("info: gamestate " .. p_OldGameState .. " -> " .. p_GameState)
     self.m_GameState = p_GameState
+
+    -- Reset the bomb plant status
+    self.m_BombSite = nil
+    self.m_BombLocation = nil
+    self:DestroyLaptop()
 
     if p_GameState == GameStates.Strat then
         self.m_StatVision:SetStratVision()
@@ -441,8 +473,12 @@ function kPMClient:OnGameTypeChanged(p_GameType)
     WebUI:ExecuteJS("ChangeType(" .. self.m_GameType .. ");")
 end
 
-function kPMClient:OnUpdateHeader(p_AttackerPoints, p_DefenderPoints, p_Rounds)
-    WebUI:ExecuteJS("UpdateHeader(" .. p_AttackerPoints .. ", " .. p_DefenderPoints .. ", " .. (p_Rounds + 1) .. ");")
+function kPMClient:OnUpdateHeader(p_AttackerPoints, p_DefenderPoints, p_Rounds, p_BombSite)
+    if p_BombSite ~= nil then
+        WebUI:ExecuteJS('UpdateHeader(' .. p_AttackerPoints .. ', ' .. p_DefenderPoints .. ', ' .. (p_Rounds + 1) .. ', "' .. tostring(p_BombSite) .. '");')
+    else
+        WebUI:ExecuteJS('UpdateHeader(' .. p_AttackerPoints .. ', ' .. p_DefenderPoints .. ', ' .. (p_Rounds + 1) .. ');')
+    end
 end
 
 function kPMClient:OnUpdateTeams(p_AttackersTeamId, p_DefendersTeamId)
@@ -587,6 +623,33 @@ function kPMClient:OnSetGameEnd(p_WinnerTeamId)
     end
 end
 
+function kPMClient:OnBombPlanted(p_BombSite, p_BombLocation)
+    if p_BombSite == nil or p_BombLocation == nil then
+        return
+    end
+
+    print('info: bomb has been planted on ' .. p_BombSite)
+
+    self.m_BombSite = p_BombSite
+    self.m_BombLocation = p_BombLocation
+    self:PlaceLaptop()
+
+    print('info: bomb location:')
+    print(self.m_BombLocation)
+
+    WebUI:ExecuteJS('BombPlanted("' .. p_BombSite .. '");')
+end
+
+function kPMClient:OnBombDefused()
+    print('info: bomb defused')
+
+    -- I dont think this is necessary because on gamestate change we clear out the bombsites
+    self.m_BombSite = nil
+    self.m_BombLocation = nil
+    self:DestroyLaptop()
+    --WebUI:ExecuteJS('BombDefused();')
+end
+
 function kPMClient:OnCleanup(p_EntityType)
     if p_EntityType == nil then
         return
@@ -622,6 +685,8 @@ function kPMClient:OnPlayerKilled(p_Player)
     end
     
     print('OnPlayerKilled')
+
+    self:EnablePlayerInputs()
 end
 
 function kPMClient:OnPlayerDeleted(p_Player)
@@ -636,23 +701,23 @@ end
 function kPMClient:IsPlayerInsideThePlantZone()
     local l_LevelName = LevelNameHelper:GetLevelName()
     if l_LevelName == nil then
-        return false
+        return nil
     end
 
     local localPlayer = PlayerManager:GetLocalPlayer()
     if localPlayer == nil then
-        return false
+        return nil
     end
 
     -- Check to see if the player is alive
     if localPlayer.alive == false then
-        return false
+        return nil
     end
 
     -- Get the local soldier instance
     local localSoldier = localPlayer.soldier
     if localSoldier == nil then
-        return false
+        return nil
     end
 
     -- Get the soldier LinearTransform
@@ -664,10 +729,110 @@ function kPMClient:IsPlayerInsideThePlantZone()
     -- print("A: " .. position:Distance(MapsConfig[l_LevelName]["PLANT_A"]["POS"].trans))
     -- print("B: " .. position:Distance(MapsConfig[l_LevelName]["PLANT_B"]["POS"].trans))
 
-    if position:Distance(MapsConfig[l_LevelName]["PLANT_A"]["POS"].trans) <= MapsConfig[l_LevelName]["PLANT_A"]["RADIUS"] or
-    position:Distance(MapsConfig[l_LevelName]["PLANT_B"]["POS"].trans) <= MapsConfig[l_LevelName]["PLANT_A"]["RADIUS"] then
-        return true
+    if localPlayer.teamId == self.m_AttackersTeamId and self.m_BombSite == nil and self.m_BombLocation == nil then
+        -- If the player is attacker and the bomb is not planted
+
+        if position:Distance(MapsConfig[l_LevelName]["PLANT_A"]["POS"].trans) <= MapsConfig[l_LevelName]["PLANT_A"]["RADIUS"] then
+            return "A"
+        end
+
+        if position:Distance(MapsConfig[l_LevelName]["PLANT_B"]["POS"].trans) <= MapsConfig[l_LevelName]["PLANT_B"]["RADIUS"] then
+            return "B"
+        end
     end
+
+    if localPlayer.teamId == self.m_DefendersTeamId and self.m_BombSite ~= nil and self.m_BombLocation ~= nil then
+        local dist = position:Distance(self.m_BombLocation)
+        if dist ~= nil then
+            -- If the player is defender and the bomb is planted
+            if dist <= kPMConfig.BombRadius then
+                -- If the a defender player is inside the defuse radius
+                return self.m_BombSite
+            end
+        end
+    end
+
+    return nil
+end
+
+function kPMClient:OnDisablePlayerInputs()
+    self:DisablePlayerInputs()
+end
+
+function kPMClient:DisablePlayerInputs()
+    if self.m_PlayerInputs then
+        local s_Player = PlayerManager:GetLocalPlayer()
+        s_Player:EnableInput(EntryInputActionEnum.EIAFire, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAJump, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAThrowGrenade, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAThrottle, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAStrafe, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAChangePose, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIAProne, false)
+        s_Player:EnableInput(EntryInputActionEnum.EIASprint, false)
+        self.m_PlayerInputs = false
+    end
+end
+
+function kPMClient:OnEnablePlayerInputs()
+    self:EnablePlayerInputs()
+end
+
+function kPMClient:EnablePlayerInputs()
+    if not self.m_PlayerInputs then
+        local s_Player = PlayerManager:GetLocalPlayer()
+        s_Player:EnableInput(EntryInputActionEnum.EIAFire, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAJump, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAThrowGrenade, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAThrottle, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAStrafe, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAChangePose, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIAProne, true)
+        s_Player:EnableInput(EntryInputActionEnum.EIASprint, true)
+        self.m_PlayerInputs = true
+    end
+end
+
+function kPMClient:PlaceLaptop()
+    local s_PlantBp = ResourceManager:SearchForDataContainer('Objects/Laptop_01/Laptop_01')
+
+	if s_PlantBp == nil then
+		error('err: could not find the plant blueprint.')
+		return
+    end
+    
+	local s_Params = EntityCreationParams()
+	s_Params.transform.trans = self.m_BombLocation
+	s_Params.networked = false
+
+    local s_Bus = EntityManager:CreateEntitiesFromBlueprint(s_PlantBp, s_Params)
+
+    if s_Bus ~= nil then
+        for _, entity in pairs(s_Bus.entities) do
+            entity:Init(Realm.Realm_Client, true)
+        end
+
+        self.m_LaptopEntity = s_Bus
+    else
+		error('err: could not spawn laptop.')
+		return
+	end
+end
+
+function kPMClient:DestroyLaptop()
+    if self.m_LaptopEntity == nil then
+        return
+    end
+
+    for _, entity in pairs(self.m_LaptopEntity.entities) do
+        if entity ~= nil then
+            entity:Destroy()
+        end 
+    end
+
+    self.m_LaptopEntity = nil
 end
 
 return kPMClient()
