@@ -1,3 +1,5 @@
+require ("__shared/GameTypes")
+
 kPMConfig =
 {
     -- ==========
@@ -54,4 +56,10 @@ kPMConfig =
 
     -- Game end time (default: 20 sec)
     MaxEndgameTime = 20.0,
+
+    -- Squad size
+    SquadSize = 24,
+
+    -- Default gametype is GameTypes.Public
+    GameType = GameTypes.Public,
 }

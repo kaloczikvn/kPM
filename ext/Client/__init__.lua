@@ -40,6 +40,9 @@ function kPMClient:__init()
     -- The current gamestate, this is read-only and should only be changed by the SERVER
     self.m_GameState = GameStates.None
 
+    -- The current gametype
+    self.m_GameType = GameTypes.Public
+
     self.m_AttackersTeamId = TeamId.Team2
     self.m_DefendersTeamId = TeamId.Team1
 
@@ -86,6 +89,9 @@ function kPMClient:RegisterEvents()
 
     -- Game State events
     self.m_GameStateChangedEvent = NetEvents:Subscribe("kPM:GameStateChanged", self, self.OnGameStateChanged)
+
+    -- Game Type events
+    self.m_GameTypeChangedEvent = NetEvents:Subscribe("kPM:GameTypeChanged", self, self.OnGameTypeChanged)
 
     -- Ready Up State Update
     self.m_RupStateEvent = NetEvents:Subscribe("kPM:RupStateChanged", self, self.OnRupStateChanged)
@@ -419,6 +425,20 @@ function kPMClient:OnGameStateChanged(p_OldGameState, p_GameState)
 
     -- Update the WebUI
     WebUI:ExecuteJS("ChangeState(" .. self.m_GameState .. ");")
+end
+
+function kPMClient:OnGameTypeChanged(p_GameType)
+    -- Validate our gametype
+    if p_GameType == nil then
+        print("err: invalid gametype")
+        return
+    end
+
+    print("info: gametype " .. p_GameType)
+    self.m_GameType = p_GameType
+
+    -- Update the WebUI
+    WebUI:ExecuteJS("ChangeType(" .. self.m_GameType .. ");")
 end
 
 function kPMClient:OnUpdateHeader(p_AttackerPoints, p_DefenderPoints, p_Rounds)

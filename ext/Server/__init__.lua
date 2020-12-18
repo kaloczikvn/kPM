@@ -3,6 +3,7 @@ class "kPMServer"
 require ("__shared/kPMConfig")
 require ("__shared/GameStates")
 require ("__shared/Utils")
+require ("__shared/GameTypes")
 
 require ("Team")
 require ("WeaponDefinitions")
@@ -27,7 +28,7 @@ function kPMServer:__init()
     self.m_LoadoutManager = LoadoutManager()
 
     -- Create a new match
-    self.m_Match = Match(self, self.m_Attackers, self.m_Defenders, kPMConfig.MatchDefaultRounds, self.m_LoadoutManager)
+    self.m_Match = Match(self, self.m_Attackers, self.m_Defenders, kPMConfig.MatchDefaultRounds, self.m_LoadoutManager, kPMConfig.GameType)
 
     -- Ready up tick
     self.m_RupTick = 0.0
@@ -81,8 +82,9 @@ function kPMServer:RegisterEvents()
     -- Partition events
     self.m_PartitionLoadedEvent = Events:Subscribe("Partition:Loaded", self, self.OnPartitionLoaded)
 
-    -- Level destroyed event
+    -- Level events
     self.m_LevelDestroyedEvent = Events:Subscribe("Level:Destroy", self, self.OnLevelDestroyed)
+    self.m_LevelLoadedEvent = Events:Subscribe("Level:Loaded", self, self.OnLevelLoaded)
 end
 
 function kPMServer:OnEngineUpdate(p_DeltaTime, p_SimulationDeltaTime)
@@ -135,8 +137,6 @@ function kPMServer:OnEngineUpdate(p_DeltaTime, p_SimulationDeltaTime)
 end
 
 function kPMServer:OnPlayerRequestJoin(p_Hook, p_JoinMode, p_AccountGuid, p_PlayerGuid, p_PlayerName)
-    -- TODO: Reject players if a match has started
-
     -- Ensure that spectators can join the server at will
     if p_JoinMode ~= "player" then
         p_Hook:Return(true)
@@ -146,19 +146,12 @@ function kPMServer:OnPlayerRequestJoin(p_Hook, p_JoinMode, p_AccountGuid, p_Play
     -- Handle player joining
 
     -- If we are in the warmup gamestate or the endgame gamestate then allow players that aren't on the whitelist to join
-    if self.m_GameState == GameStates.Warmup or self.m_GameState == GameStates.EndGame or self.m_GameState == GameStates.None then
+    -- On public gametype everyone can join at any time
+    if kPMConfig.GameType == GameTypes.Public or self.m_GameState == GameStates.Warmup or self.m_GameState == GameStates.None then
         p_Hook:Return(true)
         return
     end
 
-    -- Handle players that are already in a match
-
-    print("joinMode: " .. p_JoinMode)
-    print("playerName: " .. p_PlayerName)
-
-    --if p_PlayerName ~= "NoFaTe" then
-    --    p_Hook:Return(false)
-    --end
     for l_Index, l_Guid in ipairs(self.m_AllowedGuids) do
         -- Check if the guid is on the allow list
         if l_Guid == p_AccountGuid then
@@ -176,6 +169,10 @@ end
 
 -- This function takes a snapshot of all players in the server and adds them to the allow list
 function kPMServer:UpdateAllowedGuids()
+    if kPMConfig.GameType == GameTypes.Public then
+        return
+    end
+
     -- Clear our the previous guids
     self.m_AllowedGuids = { }
 
@@ -214,8 +211,11 @@ function kPMServer:OnPlayerConnected(p_Player)
         return
     end
 
-    -- Send out gamestate information if he reconnects
+    -- Send out gamestate information if he connects or reconnects
     NetEvents:SendTo("kPM:GameStateChanged", p_Player, GameStates.None, self.m_GameState)
+
+    -- Send out the gametype if he connects or reconnects
+    NetEvents:SendTo("kPM:GameTypeChanged", p_Player, kPMConfig.GameType)
 end
 
 function kPMServer:OnPlayerLeft(p_Player)
@@ -227,7 +227,8 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
         return
     end
     
-    if self.m_GameState == GameStates.None or 
+    if kPMConfig.GameType == GameTypes.Public or
+    self.m_GameState == GameStates.None or 
     self.m_GameState == GameStates.Warmup or 
     self.m_GameState == GameStates.NadeTraining or 
     p_Player.teamId == TeamId.TeamNeutral then
@@ -380,6 +381,10 @@ function kPMServer:OnLevelDestroyed()
     self.m_LoadoutManager:OnLevelDestroyed()
 end
 
+function kPMServer:OnLevelLoaded(p_LevelName, p_GameMode, p_Round, p_RoundsPerMap)
+    self:SetupVariables()
+end
+
 -- Helper functions
 function kPMServer:ChangeGameState(p_GameState)
     if p_GameState < GameStates.None or p_GameState > GameStates.EndGame then
@@ -419,6 +424,48 @@ end
 function kPMServer:SetGameEnd(p_WinnerTeamId)
     -- Watch out, this can be nil if the game is draw
     NetEvents:Broadcast("kPM:SetGameEnd", p_WinnerTeamId)
+end
+
+function kPMServer:SetupVariables()
+    -- Hold a dictionary of all of the variables we want to change
+    local s_VariablePair = {
+        ["vars.friendlyFire"] = "true",
+        ["vars.soldierHealth"] = "100",
+        ["vars.regenerateHealth"] = "false",
+        ["vars.onlySquadLeaderSpawn"] = "false",
+        ["vars.3dSpotting"] = "false",
+        ["vars.miniMap"] = "true",
+        ["vars.autoBalance"] = "false",
+        ["vars.teamKillCountForKick"] = "20",
+        ["vars.teamKillValueForKick"] = "10",
+        ["vars.teamKillValueIncrease"] = "1",
+        ["vars.teamKillValueDecreasePerSecond"] = "1",
+        ["vars.idleTimeout"] = "300",
+        ["vars.3pCam"] = "false",
+        ["vars.killCam"] = "false",
+        ["vars.roundStartPlayerCount"] = "0",
+        ["vars.roundRestartPlayerCount"] = "0",
+        ["vars.hud"] = "true",
+        ["vars.killCam"] = "false",
+        ["vu.SquadSize"] = tostring(kPMConfig.SquadSize),
+        ["vu.ColorCorrectionEnabled"] = "false",
+        ["vu.SunFlareEnabled"] = "false",
+        ["vu.SuppressionMultiplier"] = "0",
+        ["vu.DestructionEnabled"] = "false",
+    }
+
+    -- Iterate through all of the commands and set their values via rcon
+    for l_Command, l_Value in pairs(s_VariablePair) do
+        local s_Result = RCON:SendCommand(l_Command, { l_Value })
+
+        if #s_Result >= 1 then
+            if s_Result[1] ~= "OK" then
+                print("command: " .. l_Command .. " returned: " .. s_Result[1])
+            end
+        end
+    end
+
+    print("RCON Variables Setup")
 end
 
 return kPMServer()

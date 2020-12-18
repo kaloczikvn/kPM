@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { GameStates, GameStatesRoundString } from "./helpers/GameStates";
+import { GameTypes, GameTypesString } from './helpers/GameTypes';
 import CountDown from "./components/CountDown";
 
 import './Header.scss';
@@ -12,9 +13,10 @@ interface Props {
     currentScene: GameStates;
     round: number|null;
     showHud: boolean;
+    gameType: GameTypes;
 }
 
-const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAttackersScore, teamDefendersScore, currentScene, round, showHud }) => {
+const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAttackersScore, teamDefendersScore, currentScene, round, showHud, gameType }) => {
     const [ time, setTime ] = useState<number>(0);
 
     window.SetTimer = function(p_Time: number) {
@@ -62,6 +64,10 @@ const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAtt
                             <span className="round">
                                 {GameStatesRoundString[currentScene].replace('{round}', (round?.toString()??'1'))??''}
                             </span>
+
+                            <div className="gameTypeLabel">
+                                {GameTypesString[gameType]}
+                            </div>
                         </div>
                         <div id="scoreDefenders">
                             {/*<span id="team">Defenders</span>*/}

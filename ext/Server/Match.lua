@@ -2,12 +2,19 @@ local Match = class("Match")
 require ("__shared/MapsConfig")
 require ("__shared/GameStates")
 require ("__shared/kPMConfig")
-require ("LoadoutManager")
-require ("LoadoutDefinitions")
 require ("__shared/LevelNameHelper")
+require ("__shared/GameTypes")
 require ("__shared/Util/TableHelper")
 
-function Match:__init(p_Server, p_TeamAttackers, p_TeamDefenders, p_RoundCount, p_LoadoutManager)
+require ("LoadoutManager")
+require ("LoadoutDefinitions")
+
+function Match:__init(p_Server, p_TeamAttackers, p_TeamDefenders, p_RoundCount, p_LoadoutManager, p_GameType)
+    if p_GameType ~= GameTypes.Public then
+        print("Only public gametype is supported as of now.")
+        return
+    end
+
     -- Save server reference
     self.m_Server = p_Server
 
@@ -68,6 +75,8 @@ function Match:__init(p_Server, p_TeamAttackers, p_TeamDefenders, p_RoundCount, 
     self.m_UpdateManagerUpdateEvent = Events:Subscribe("UpdateManager:Update", self, self.OnUpdateManagerUpdate)
 
     self.m_RestartQueue = false
+
+    self.m_GameType = p_GameType
 
     print("init: " .. self.m_UpdateTicks[GameStates.EndGame])
 end
@@ -162,7 +171,13 @@ function Match:OnWarmupToKnife(p_DeltaTime)
         -- Tried this to remove the animated melee attack, not really working
         -- self:FireEventForSpecificEntity("ServerMeleeEntity", "DisableMeleeTarget")
 
-        self.m_Server:ChangeGameState(GameStates.KnifeRound)
+        if self.m_GameType == GameTypes.Public then
+            self.m_Server:ChangeGameState(GameStates.FirstHalf)
+        end
+
+        if self.m_GameType == GameTypes.Comp then
+            self.m_Server:ChangeGameState(GameStates.KnifeRound)
+        end
     end
 
     -- Update the tick

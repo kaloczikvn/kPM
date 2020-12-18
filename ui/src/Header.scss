@@ -112,6 +112,20 @@
                     top: 0;
                     left: 0;
                 }
+
+                .gameTypeLabel {
+                    height: 2vh;
+                    position: absolute;
+                    bottom: -2vh;
+                    left: 0;
+                    width: 100%;
+                    font-size: 1.55vh;
+                    background: #fff;
+                    color: #000;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                    opacity: 1;
+                }
             }
         }
     }

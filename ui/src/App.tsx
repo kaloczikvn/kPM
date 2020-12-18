@@ -11,6 +11,7 @@ import KnifeRoundScene from "./scenes/KnifeRoundScene";
 import LoadoutScene from "./scenes/LoadoutScene";
 
 import { GameStates } from './helpers/GameStates';
+import { GameTypes } from './helpers/GameTypes';
 import { Teams } from "./helpers/Teams";
 import { Player, Players } from "./helpers/Player";
 
@@ -41,6 +42,12 @@ const App: React.FC = () => {
         if (p_GameState !== GameStates.None && showHud !== true) {
             setShowHud(true)
         }
+    }
+
+    const [gameType, setGameType] = useState<GameTypes>(GameTypes.Comp);
+
+    window.ChangeType = function (p_GameType: GameTypes) {
+        setGameType(p_GameType);
     }
 
     /*
@@ -239,6 +246,7 @@ const App: React.FC = () => {
                     teamAttackersClan=""
                     teamDefendersClan=""
                     round={round}
+                    gameType={gameType}
                 />
                 <GameStatesPage />
                 <TeamsScene
@@ -285,6 +293,7 @@ export default App;
 declare global {
     interface Window {
         ChangeState: (p_GameState: GameStates) => void;
+        ChangeType: (p_GameType: GameTypes) => void;
         //UpdateRoundEndStatus: (p_RoundWon: boolean, p_WinningTeam: Teams, p_Team1Score: number, p_Team2Score: number) => void;
         OpenCloseLoadoutMenu: () => void;
         OpenCloseTeamMenu: (forceOpen?: boolean) => void;
