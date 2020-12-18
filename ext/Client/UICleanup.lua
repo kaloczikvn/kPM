@@ -5,9 +5,10 @@ function UICleanup:__init()
     
     Hooks:Install('UI:PushScreen', 999, function(hook, screen, graphPriority, parentGraph)
         local screen = UIGraphAsset(screen)
-        
+
         if screen.name == 'UI/Flow/Screen/SpawnScreenPC' or
             screen.name == 'UI/Flow/Screen/SpawnScreenTicketCounterTDMScreen' or
+            screen.name == 'UI/Flow/Screen/KillScreen' or
             screen.name == 'UI/Flow/Screen/SpawnButtonScreen' then
             hook:Return(nil)
             return
