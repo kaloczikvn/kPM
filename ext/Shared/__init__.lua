@@ -8,6 +8,8 @@ function kPMShared:__init()
 
     self.m_ExtensionLoadedEvent = Events:Subscribe("Extension:Loaded", self, self.OnExtensionLoaded)
     self.m_ExtensionUnloadedEvent = Events:Subscribe("Extension:Unloaded", self, self.OnExtensionUnloaded)
+
+    self.m_LevelName = nil
 end
 
 function kPMShared:OnExtensionLoaded()
@@ -43,26 +45,34 @@ function kPMShared:UnregisterEvents()
 end
 
 function kPMShared:OnLevelLoaded(p_LevelName, p_GameMode)
-    print("spawn map specific stuff")
-    
-    self:SpawnPlants(LevelNameHelper:GetLevelName())
+    self:SpawnPlants()
 end
 
-function kPMShared:OnPartitionLoaded(partition)
-    local l_LevelName = LevelNameHelper:GetLevelName()
+function kPMShared:OnPartitionLoaded(p_Partition)
+    if self.m_LevelName == nil then
+        self.m_LevelName = LevelNameHelper:GetLevelName()
+    end
 
-    if l_LevelName ~= nil then
-        if partition.guid == MapsConfig[l_LevelName]["EFFECTS_WORLD_PART_DATA"]["PARTITION"] then
-            for _, instance in pairs(partition.instances) do
-                if instance.instanceGuid == MapsConfig[l_LevelName]["EFFECTS_WORLD_PART_DATA"]["INSTANCE"] then
-                    local l_EffectsWorldData = WorldPartData(instance)
-                    for _, object in pairs(l_EffectsWorldData.objects) do
-                        if object:Is("EffectReferenceObjectData") then
-                            local effectReferenceObjectData = EffectReferenceObjectData(object)
-                            effectReferenceObjectData:MakeWritable()
-                            effectReferenceObjectData.excluded = true
+    if self.m_LevelName ~= nil then
+        if p_Partition.guid == MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"]["PARTITION"] then
+            for _, l_Instance in pairs(p_Partition.instances) do
+                if l_Instance.instanceGuid == MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"]["INSTANCE"] then
+                    local l_EffectsWorldData = WorldPartData(l_Instance)
+                    for _, l_Object in pairs(l_EffectsWorldData.objects) do
+                        if l_Object:Is("EffectReferenceObjectData") then
+                            local l_EffectReferenceObjectData = EffectReferenceObjectData(l_Object)
+                            l_EffectReferenceObjectData:MakeWritable()
+                            l_EffectReferenceObjectData.excluded = true
                         end
                     end
+                end
+            end
+        elseif p_Partition.guid == MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"]["PARTITION"] then
+            for _, l_Instance in pairs(p_Partition.instances) do
+                if l_Instance.instanceGuid == MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"]["INSTANCE"] then
+                    local l_CameraEntityData = CameraEntityData(l_Instance)
+                    l_CameraEntityData:MakeWritable()
+                    l_CameraEntityData.enabled = false
                 end
             end
         end
@@ -95,13 +105,13 @@ end
 -- ==========
 -- kPM Specific functions
 -- ==========
-function kPMShared:SpawnPlants(p_LevelName)
-    if p_LevelName == nil then
-        return
+function kPMShared:SpawnPlants()
+    if self.m_LevelName == nil then
+        self.m_LevelName = LevelNameHelper:GetLevelName()
     end
     
-    self:SpawnPlant(MapsConfig[p_LevelName]["PLANT_A"]["POS"], "A")
-    self:SpawnPlant(MapsConfig[p_LevelName]["PLANT_B"]["POS"], "B")
+    self:SpawnPlant(MapsConfig[self.m_LevelName]["PLANT_A"]["POS"], "A")
+    self:SpawnPlant(MapsConfig[self.m_LevelName]["PLANT_B"]["POS"], "B")
 end
 
 function kPMShared:SpawnPlant(p_Trans, p_Id)

@@ -53,5 +53,10 @@ MapsConfig =
             PARTITION = Guid('7B7B690B-9530-4AD0-8EC1-3DC1991D9400'),
             INSTANCE = Guid('3AB827D0-FE7C-451F-ADA1-A28068D4CA03'),
         },
+
+        CAMERA_ENTITY_DATA = {
+            PARTITION = Guid('FAD987C1-7D2A-11E0-B283-C22E2A7B7393'),
+            INSTANCE = Guid('E8C38AF4-15F8-43F9-9F39-4CF1D667732E'),
+        },
     }
 }
