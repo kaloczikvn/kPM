@@ -418,6 +418,70 @@ export let Weapons = {
             },
         },
     },
+    U_M249: {
+        Key: "U_M249",
+        Name: "M249 SAW",
+        Image: "fb://UI/Art/Persistence/Weapons/m249",
+        Vext: "Weapons/M249/U_M249",
+        Attachments: {
+            Sights: {
+                None: {
+                    Key: "None",
+                    Name: "Iron Sights",
+                    Vext: "Weapons/Common/NoOptics",
+                },
+                U_M249_RX01: {
+                    Key: "U_M249_RX01",
+                    Name: "Reflex (RDS)",
+                    Vext: "Weapons/M249/U_M249_RX01",
+                },
+                U_M249_Kobra: {
+                    Key: "U_M249_Kobra",
+                    Name: "Kobra (RDS)",
+                    Vext: "Weapons/M249/U_M249_Kobra",
+                },
+                U_M249_Acog: {
+                    Key: "U_M249_Acog",
+                    Name: "ACOG (4x)",
+                    Vext: "Weapons/M249/U_M249_Acog",
+                },
+            },
+            Primary: {
+                None: {
+                    Key: "None",
+                    Name: "No Primary",
+                    Vext: "",
+                },
+                U_M249_Foregrip: {
+                    Key: "U_M249_Foregrip",
+                    Name: "Foregrip",
+                    Vext: "Weapons/M249/U_M249_Foregrip",
+                },
+                U_M249_Bipod: {
+                    Key: "U_M249_Bipod",
+                    Name: "Bipod",
+                    Vext: "Weapons/M249/U_M249_Bipod",
+                },
+            },
+            Secondary: {
+                None: {
+                    Key: "None",
+                    Name: "No Secondary",
+                    Vext: "",
+                },
+                U_M249_Flashsuppressor: {
+                    Key: "U_M249_Flashsuppressor",
+                    Name: "Flash Supp.",
+                    Vext: "Weapons/M249/U_M249_Flashsuppressor",
+                },
+                U_M249_Silencer: {
+                    Key: "U_M249_Silencer",
+                    Name: "Suppressor",
+                    Vext: "Weapons/M249/U_M249_Silencer",
+                },
+            },
+        },
+    },
 
     // Sniper
     U_M98B: {
@@ -484,6 +548,70 @@ export let Weapons = {
             },
         },
     },
+    U_L96: {
+        Key: "U_L96",
+        Name: "L96A1",
+        Image: "fb://UI/Art/Persistence/Weapons/l96",
+        Vext: "Weapons/XP1_L96/U_L96",
+        Attachments: {
+            Sights: {
+                None: {
+                    Key: "None",
+                    Name: "Iron Sights",
+                    Vext: "Weapons/Common/NoOptics",
+                },
+                U_L96_ACOG: {
+                    Key: "U_L96_ACOG",
+                    Name: "ACOG (4x)",
+                    Vext: "Weapons/XP1_L96/U_L96_ACOG",
+                },
+                U_L96_Rifle_Scope: {
+                    Key: "U_L96_Rifle_Scope",
+                    Name: "Rifle Scope (8x)",
+                    Vext: "Weapons/XP1_L96/U_L96_Rifle_Scope",
+                },
+                U_L96_Ballistic_Scope: {
+                    Key: "U_L96_Ballistic_Scope",
+                    Name: "Ballistic Scope (12x)",
+                    Vext: "Weapons/XP1_L96/U_L96_Ballistic_Scope",
+                },
+            },
+            Primary: {
+                None: {
+                    Key: "None",
+                    Name: "No Primary",
+                    Vext: "",
+                },
+                U_L96_StraightPull: {
+                    Key: "U_L96_StraightPull",
+                    Name: "Straight Pull Bolt",
+                    Vext: "Weapons/XP1_L96/U_L96_StraightPull",
+                },
+                U_L96_Bipod: {
+                    Key: "U_L96_Bipod",
+                    Name: "Bipod",
+                    Vext: "Weapons/XP1_L96/U_L96_Bipod",
+                },
+            },
+            Secondary: {
+                None: {
+                    Key: "None",
+                    Name: "No Secondary",
+                    Vext: "",
+                },
+                U_L96_FlashSuppressor: {
+                    Key: "U_L96_FlashSuppressor",
+                    Name: "Flash Supp.",
+                    Vext: "Weapons/XP1_L96/U_L96_FlashSuppressor",
+                },
+                U_L96_Silencer: {
+                    Key: "U_L96_Silencer",
+                    Name: "Suppressor",
+                    Vext: "Weapons/XP1_L96/U_L96_Silencer",
+                },
+            },
+        },
+    },
 
     // Secondary
     U_M9: {
@@ -535,6 +663,12 @@ export let Weapons = {
         Name: "MAV",
         Image: "fb://UI/Art/Persistence/Weapons/mav",
         Vext: "Weapons/Gadgets/MAV/U_MAV",
+    },
+    U_M320_SMK: {
+        Key: "U_M320_SMK",
+        Name: "M320 Smoke",
+        Image: "fb://UI/Art/Persistence/Weapons/m320",
+        Vext: "Weapons/Gadgets/M320/U_M320_SMK",
     },
 
 

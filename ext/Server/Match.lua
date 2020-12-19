@@ -6,6 +6,7 @@ require ("__shared/LevelNameHelper")
 require ("__shared/GameTypes")
 require ("__shared/Util/TableHelper")
 
+require ("Team")
 require ("LoadoutManager")
 require ("LoadoutDefinitions")
 
@@ -81,8 +82,6 @@ function Match:__init(p_Server, p_TeamAttackers, p_TeamDefenders, p_RoundCount, 
     self.m_BombSite = nil
     self.m_BombLocation = nil
     self.m_BombTime = nil
-
-    print("init: " .. self.m_UpdateTicks[GameStates.EndGame])
 end
 
 function Match:OnUpdateManagerUpdate(p_DeltaTime, p_UpdatePass)
@@ -96,8 +95,11 @@ function Match:OnUpdateManagerUpdate(p_DeltaTime, p_UpdatePass)
         end
 
         if self.m_RestartQueue then
-            -- TODO: Dont show the endscreen, just restart the map or something like that!
-            RCON:SendCommand('mapList.endround', {"1"})
+            if self.m_Defenders:CountRoundWon() > self.m_Attackers:CountRoundWon() then
+                RCON:SendCommand('mapList.endround', {tostring(self.m_Defenders:GetTeamId())})
+            else
+                RCON:SendCommand('mapList.endround', {tostring(self.m_Attackers:GetTeamId())})
+            end
         end
     end
 end
@@ -1180,6 +1182,52 @@ function Match:FireEventForSpecificEntity(p_EntityType, p_EventString)
             l_Entity:FireEvent(p_EventString)
         end
     end
+end
+
+function Match:RestartMatch()
+    self.m_CurrentRound = 0
+
+    self.m_ReadyUpPlayers = { }
+    NetEvents:Broadcast('Player:ReadyUpPlayers', self.m_ReadyUpPlayers)
+
+    self.m_CurrentState = GameStates.None
+    self.m_LastState = GameStates.None
+
+    self.m_UpdateTicks = { }
+    self.m_UpdateTicks[GameStates.None] = 0.0
+    self.m_UpdateTicks[GameStates.Warmup] = 0.0
+    self.m_UpdateTicks[GameStates.WarmupToKnife] = 0.0
+    self.m_UpdateTicks[GameStates.KnifeRound] = 0.0
+    self.m_UpdateTicks[GameStates.KnifeToFirst] = 0.0
+    self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+    self.m_UpdateTicks[GameStates.FirstToHalf] = 0.0
+    self.m_UpdateTicks[GameStates.HalfTime] = 0.0
+    self.m_UpdateTicks[GameStates.HalfToSecond] = 0.0
+    self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+    self.m_UpdateTicks[GameStates.Timeout] = 0.0
+    self.m_UpdateTicks[GameStates.Strat] = 0.0
+    self.m_UpdateTicks[GameStates.NadeTraining] = 0.0
+    self.m_UpdateTicks[GameStates.EndGame] = 0.0
+
+    self.m_KillQueue = { }
+    self.m_SpawnQueue = { }
+
+    self.m_RestartQueue = false
+
+    self.m_BombSite = nil
+    self.m_BombLocation = nil
+    self.m_BombTime = nil
+
+    self.m_Attackers:RoundReset()
+    self.m_Defenders:RoundReset()
+
+    self.m_Server:ChangeGameState(GameStates.Warmup)
+
+    self:SwitchTeams()
+
+    NetEvents:Broadcast("kPM:ResetUI")
+
+    self:KillAllPlayers(false)
 end
 
 return Match

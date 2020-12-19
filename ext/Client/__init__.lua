@@ -128,10 +128,12 @@ function kPMClient:RegisterEvents()
     self.m_SetSelectedTeamEvent = Events:Subscribe("WebUISetSelectedTeam", self, self.OnSetSelectedTeam)
     self.m_SetSelectedLoadoutEvent = Events:Subscribe("WebUISetSelectedLoadout", self, self.OnSetSelectedLoadout)
     
+    
     self.m_StartWebUITimerEvent = NetEvents:Subscribe("kPM:StartWebUITimer", self, self.OnStartWebUITimer)
     self.m_UpdateHeaderEvent = NetEvents:Subscribe("kPM:UpdateHeader", self, self.OnUpdateHeader)
     self.m_SetRoundEndInfoBoxEvent = NetEvents:Subscribe("kPM:SetRoundEndInfoBox", self, self.OnSetRoundEndInfoBox)
     self.m_SetGameEndEvent = NetEvents:Subscribe("kPM:SetGameEnd", self, self.OnSetGameEnd)
+    self.m_ResetUIEvent = NetEvents:Subscribe("kPM:ResetUI", self, self.OnResetUI)
 
     self.m_BombPlantedEvent = NetEvents:Subscribe("kPM:BombPlanted", self, self.OnBombPlanted)
     self.m_BombDefusedEvent = NetEvents:Subscribe("kPM:BombDefused", self, self.OnBombDefused)
@@ -644,6 +646,11 @@ function kPMClient:OnSetGameEnd(p_WinnerTeamId)
     end
 end
 
+
+function kPMClient:OnResetUI()
+    WebUI:ExecuteJS('ResetUI();')
+end
+
 function kPMClient:OnBombPlanted(p_BombSite, p_BombLocation)
     if p_BombSite == nil or p_BombLocation == nil then
         return
@@ -836,11 +843,40 @@ function kPMClient:PlaceLaptop()
         end
 
         self.m_LaptopEntity = s_Bus
+
+        --self:PlaceSoundEntity()
     else
 		error('err: could not spawn laptop.')
 		return
 	end
 end
+
+--[[function kPMClient:PlaceSoundEntity()
+    print('PlaceSoundEntity')
+    local s_SoundAsset = ResourceManager:SearchForDataContainer('Sound/Weapons/Handheld/Radio_Beacon/Radio_Beacon_Fire_1p')
+
+	if s_SoundAsset == nil then
+		error('err: could not find the plant blueprint.')
+		return
+    end
+
+    local s_EntityPos = LinearTransform()
+    s_EntityPos.trans = self.m_BombLocation
+
+    local s_EntityData = SoundEntityData()
+    s_EntityData.transform = s_EntityPos
+    s_EntityData.sound = SoundAsset(s_SoundAsset)
+    s_EntityData.playOnCreation = true
+
+    local s_CreatedEntity = EntityManager:CreateEntity(s_EntityData, s_EntityPos)
+
+    if s_CreatedEntity ~= nil then
+        s_CreatedEntity:Init(Realm.Realm_Client, true)
+    else
+		error('err: could not spawn laptop.')
+		return
+	end
+end]]
 
 function kPMClient:DestroyLaptop()
     if self.m_LaptopEntity == nil then

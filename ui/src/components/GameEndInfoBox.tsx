@@ -1,12 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Teams } from "../helpers/Teams";
 
 interface Props {
     gameWon: boolean|null;
     winningTeam: Teams|null;
+    afterInterval: () => void;
 }
 
-const GameEndInfoBox: React.FC<Props> = ({ gameWon, winningTeam }) => {
+const GameEndInfoBox: React.FC<Props> = ({ gameWon, winningTeam, afterInterval }) => {
+    useEffect(() => {
+        const interval = setInterval(() => {
+            afterInterval();
+        }, 10000);
+        return () => {
+            clearInterval(interval);
+        }
+    }, []);
+
     return (
         <>
             <div className={"roundEndInfoBox gameEndInfoBox fadeInTop " + ((winningTeam !== null ? ((winningTeam === Teams.Attackers) ?  'defenders' : 'attackers') : ''))}>

@@ -1,7 +1,8 @@
 class "kPMShared"
 
 require("__shared/MapsConfig")
-require ("__shared/LevelNameHelper")
+require("__shared/LevelNameHelper")
+require("__shared/MapMarkerEntityDataGenerator")
 
 function kPMShared:__init()
     print("shared initialization")
@@ -10,6 +11,9 @@ function kPMShared:__init()
     self.m_ExtensionUnloadedEvent = Events:Subscribe("Extension:Unloaded", self, self.OnExtensionUnloaded)
 
     self.m_LevelName = nil
+
+    self.s_CustomMapMarkerEntityAGuid = Guid('261E43BF-259B-41D2-BF3B-42069ASITE')
+    self.s_CustomMapMarkerEntityBGuid = Guid('271E43CF-269C-42D2-CF3C-69420BSITE')
 end
 
 function kPMShared:OnExtensionLoaded()
@@ -32,16 +36,48 @@ function kPMShared:RegisterEvents()
     print("registering events")
 
     -- Level events
+    self.m_LevelRegisterEntityResourcesEvent = Events:Subscribe('Level:RegisterEntityResources', self, self.OnLevelRegisterEntityResources)
     self.m_LevelLoadedEvent = Events:Subscribe("Level:Loaded", self, self.OnLevelLoaded)
-    self.m_PartitionLoaded = Events:Subscribe("Partition:Loaded", self, self.OnPartitionLoaded)
+    self.m_PartitionLoadedEvent = Events:Subscribe("Partition:Loaded", self, self.OnPartitionLoaded)
+    self.m_LevelLoadResourcesEvent = Events:Subscribe("Level:LoadResources", self, self.OnLevelLoadResources)
+end
 
-    Events:Subscribe('Level:LoadResources', function()
-        ResourceManager:MountSuperBundle('Levels/COOP_010/COOP_010')
-    end)
+function kPMShared:OnLevelLoadResources()
+    ResourceManager:MountSuperBundle('Levels/COOP_010/COOP_010')
 end
 
 function kPMShared:UnregisterEvents()
     print("unregistering events")
+end
+
+function kPMShared:OnLevelRegisterEntityResources()
+    if self.m_LevelName == nil then
+        self.m_LevelName = LevelNameHelper:GetLevelName()
+    end
+
+    local s_Registry = RegistryContainer(ResourceManager:SearchForInstanceByGuid(MapsConfig[self.m_LevelName]["REGISTRY_CONTAINER"]["INSTANCE"]))
+    
+    if s_Registry == nil then
+        error('s_Registry not found')
+        return
+    end
+
+    local s_CustomMapMarkerEntityAData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityAGuid))
+    if s_CustomMapMarkerEntityAData == nil then
+        error('s_CustomMapMarkerEntityAData not found')
+        return
+    end
+
+    local s_CustomMapMarkerEntityBData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityBGuid))
+    if s_CustomMapMarkerEntityBData == nil then
+        error('s_CustomMapMarkerEntityBData not found')
+        return
+    end
+
+    s_Registry:MakeWritable()
+    s_Registry.entityRegistry:add(s_CustomMapMarkerEntityAData)
+    s_Registry.entityRegistry:add(s_CustomMapMarkerEntityBData)
+    ResourceManager:AddRegistry(s_Registry, ResourceCompartment.ResourceCompartment_Game)
 end
 
 function kPMShared:OnLevelLoaded(p_LevelName, p_GameMode)
@@ -77,6 +113,18 @@ function kPMShared:OnPartitionLoaded(p_Partition)
             end
         end
     end
+
+    for _, l_Instance in pairs(p_Partition.instances) do
+        if l_Instance.instanceGuid == self.s_CustomMapMarkerEntityAGuid or l_Instance.instanceGuid == self.s_CustomMapMarkerEntityBGuid then
+			return
+		end
+    end
+
+    local s_EntityDataA = MapMarkerEntityDataGenerator:Create(self.s_CustomMapMarkerEntityAGuid, "A")
+    p_Partition:AddInstance(s_EntityDataA)
+
+    local s_EntityDataB = MapMarkerEntityDataGenerator:Create(self.s_CustomMapMarkerEntityBGuid, "B")
+    p_Partition:AddInstance(s_EntityDataB)
 end
 
 -- ==========
@@ -116,7 +164,7 @@ end
 
 function kPMShared:SpawnPlant(p_Trans, p_Id)
     self:SpawnPlantObjects(p_Trans)
-    --self:SpawnIconEntities(p_Trans)
+    self:SpawnIconEntities(p_Trans, p_Id)
 end
 
 function kPMShared:SpawnPlantObjects(p_Trans)
@@ -144,55 +192,30 @@ function kPMShared:SpawnPlantObjects(p_Trans)
 	end
 end
 
-function kPMShared:SpawnIconEntities(p_Trans)
-    local s_EntityPos = LinearTransform()
-    s_EntityPos.trans = p_Trans.trans
-    
-    local s_EntityData = MapMarkerEntityData()
-    s_EntityData.baseTransform = Vec3(0, 0, 0)
-    s_EntityData.progressMinTime = 15.0
-    s_EntityData.sid = ""
-    s_EntityData.nrOfPassengers = 0
-    s_EntityData.nrOfEntries = 0
-    s_EntityData.progressTime1Player = 0.0
-    s_EntityData.showRadius = 0.0
-    s_EntityData.hideRadius = 0.0
-    s_EntityData.blinkTime = 5.0
-    s_EntityData.markerType = MapMarkerType.MMTMissionObjective
-    s_EntityData.visibleForTeam = TeamId.TeamNeutral
-    s_EntityData.ownerTeam = TeamId.TeamNeutral
-    s_EntityData.hudIcon = UIHudIcon.UIHudIcon_ObjectiveGeneral
-    s_EntityData.verticalOffset = 0.0
-    s_EntityData.focusPointRadius = 80.0
-    s_EntityData.instantFlagReturnRadius = 0.0
-    s_EntityData.progress = 0.0
-    s_EntityData.progressPlayerSpeedUpPercentage = 10.0
-    s_EntityData.trackedPlayersInRange = 0
-    s_EntityData.trackingPlayerRange = 10.0
-    s_EntityData.progressTime = 80.0
-    s_EntityData.onlyShowSnapped = false
-    s_EntityData.flagControlMarker = false
-    s_EntityData.showProgress = false
-    s_EntityData.useMarkerTransform = false
-    s_EntityData.isVisible = true
-    s_EntityData.snap = true
-    s_EntityData.showAirTargetBox = true
-    s_EntityData.isFocusPoint = true
-    s_EntityData.enabled = true
-    s_EntityData.transform = LinearTransform(
-        Vec3(1, 0, 0),
-        Vec3(0, 1, 0),
-        Vec3(0, 0, 1),
-        Vec3(0, 6.4, 0)
-    )
-    
-    local s_CreatedEntity = EntityManager:CreateEntity(s_EntityData, s_EntityPos)
-    
-    if s_CreatedEntity ~= nil then
-        s_CreatedEntity:Init(Realm.Realm_Server, true)
+function kPMShared:SpawnIconEntities(p_Trans, p_Id)
+    local s_CustomMapMarkerEntityData = nil
+    if p_Id == "A" then
+        s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityAGuid))
+    elseif p_Id == "B" then
+        s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityBGuid))
+    end
+
+    print("Icon spawning for: " .. p_Id)
+    print(s_CustomMapMarkerEntityData)
+
+    if s_CustomMapMarkerEntityData ~= nil then
+        local s_EntityPos = LinearTransform()
+        s_EntityPos.trans = p_Trans.trans
+
+        local s_CreatedEntity = EntityManager:CreateEntity(s_CustomMapMarkerEntityData, s_EntityPos)
+
+        print(s_CreatedEntity)
+
+        if s_CreatedEntity ~= nil then
+            s_CreatedEntity:Init(Realm.Realm_ClientAndServer, true)
+        end
     else
-        error('err: could not spawn icon.')
-		return
+        print('err: s_CustomMapMarkerEntityData - could not spawn icon.')
     end
 end
 

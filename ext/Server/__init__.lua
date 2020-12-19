@@ -61,12 +61,6 @@ function kPMServer:RegisterEvents()
     
     -- Damage hooks
     self.m_SoldierDamageHook = Hooks:Install("Soldier:Damage", 1, self, self.OnSoldierDamage)
-    
-    -- Replaced by the vu.SuppressionMultiplier 0 server command
-    -- should also use vu.SunFlareEnabled 0
-    -- + vu.DestructionEnabled 0 too, IDK
-    -- + vu.ColorCorrectionEnabled 0
-    --self.m_ServerSuppressEnemies = Hooks:Install("Server:SupressEnemies", 1, self, self.OnServerSuppressEnemies)
 
     -- Events from the client
     self.m_ToggleRupEvent = NetEvents:Subscribe("kPM:ToggleRup", self, self.OnToggleRup)
@@ -403,6 +397,10 @@ end
 
 function kPMServer:OnLevelLoaded(p_LevelName, p_GameMode, p_Round, p_RoundsPerMap)
     self:SetupVariables()
+
+    if self.m_GameState ~= GameStates.None then
+        self.m_Match:RestartMatch()
+    end
 end
 
 -- Helper functions

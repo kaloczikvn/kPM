@@ -210,8 +210,33 @@ const App: React.FC = () => {
             setPlantProgress(Math.round(m_PlantOrDefuseHeldTime / PlantTime * 100));
             setPlantOrDefuse(plantOrDefuse);
         }
-        
-        console.log(m_PlantOrDefuseHeldTime, PlantTime, plantOrDefuse)
+    }
+
+    window.ResetUI = function() {
+        //setScene(GameStates.Warmup);
+        setRound(0);
+        setRoundWon(false);
+        setWinningTeam(Teams.Attackers);
+        setTeamAttackersScore(0);
+        setTeamDefendersScore(0);
+        setBombPlantedOn(null);
+
+        // Show the select team page
+        setShowTeamsPage(true);
+        setSelectedTeam(Teams.None);
+        setShowScoreboard(false);
+
+        setShowLoadoutPage(false);
+        setShowRoundEndInfoBox(false);
+
+        // setGameWon
+        // setGameWinningTeam
+
+        setBombPlanted(null);
+
+        setRupProgress(0);
+        setPlantProgress(0);
+        setPlantOrDefuse("plant");
     }
 
     const GameStatesPage = () => {
@@ -307,7 +332,7 @@ const App: React.FC = () => {
                 />
                 
                 {bombPlanted !== null &&
-                    <BombPlantInfoBox bombSite={bombPlanted} afterAudio={() => setBombPlanted(null)} />
+                    <BombPlantInfoBox bombSite={bombPlanted} afterInterval={() => setBombPlanted(null)} />
                 }
 
                 {gameWon !== null 
@@ -315,6 +340,10 @@ const App: React.FC = () => {
                     <GameEndInfoBox
                         gameWon={gameWon}
                         winningTeam={gameWinningTeam}
+                        afterInterval={() => {
+                            setGameWon(null);
+                            setGameWinningTeam(null);
+                        }}
                         />
                 :
                     <>
@@ -350,5 +379,6 @@ declare global {
         SetGameEnd: (p_GameWon: boolean, p_WinningTeam: string) => void;
         BombPlanted: (p_BombSite: string|null) => void;
         PlantInteractProgress: (m_PlantOrDefuseHeldTime: number, PlantTime: number, plantOrDefuse: string) => void
+        ResetUI: () => void;
     }
 }

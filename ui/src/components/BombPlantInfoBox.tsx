@@ -4,10 +4,10 @@ import plantAudio from '../assets/audio/alarm.wav';
 
 interface Props {
     bombSite: string | null;
-    afterAudio: () => void;
+    afterInterval: () => void;
 }
 
-const BombPlantInfoBox: React.FC<Props> = ({ bombSite, afterAudio }) => {
+const BombPlantInfoBox: React.FC<Props> = ({ bombSite, afterInterval }) => {
     /*const [audio] = useState(new Audio(plantAudio));
     const [playing, setPlaying] = useState<boolean>((bombSite !== null));
 
@@ -31,7 +31,7 @@ const BombPlantInfoBox: React.FC<Props> = ({ bombSite, afterAudio }) => {
 
     useEffect(() => {
         const interval = setInterval(() => {
-            afterAudio();
+            afterInterval();
         }, 4000);
         return () => {
             clearInterval(interval);

@@ -14,15 +14,15 @@ export var Kits: any = [
                 U_Taurus44: Weapons.U_Taurus44,
             },
             Tactical: {
+                U_M320_SMK: Weapons.U_M320_SMK,
                 U_Ammobag: Weapons.U_Ammobag,
-                U_C4: Weapons.U_C4,
             },
             Lethal: {
                 U_M67: Weapons.U_M67,
             },
             defaultPrimary: Weapons.U_M16A4.Key,
             defaultSecondary: Weapons.U_Taurus44.Key,
-            defaultTactical: Weapons.U_Ammobag.Key,
+            defaultTactical: Weapons.U_M320_SMK.Key,
             defaultLethal: Weapons.U_M67.Key,
         },
     },
@@ -55,6 +55,7 @@ export var Kits: any = [
         Weapons: {
             Primary: {
                 U_SPAS12: Weapons.U_SPAS12,
+                U_M249: Weapons.U_M249,
             },
             Secondary: {
                 U_M9: Weapons.U_M9,
@@ -77,6 +78,7 @@ export var Kits: any = [
         Name: "Sniper",
         Weapons: {
             Primary: {
+                U_L96: Weapons.U_L96,
                 U_M98B: Weapons.U_M98B,
             },
             Secondary: {
@@ -85,11 +87,12 @@ export var Kits: any = [
             },
             Tactical: {
                 U_MAV: Weapons.U_MAV,
+                U_Ammobag: Weapons.U_Ammobag,
             },
             Lethal: {
                 U_M67: Weapons.U_M67,
             },
-            defaultPrimary: Weapons.U_M98B.Key,
+            defaultPrimary: Weapons.U_L96.Key,
             defaultSecondary: Weapons.U_Taurus44.Key,
             defaultTactical: Weapons.U_MAV.Key,
             defaultLethal: Weapons.U_M67.Key,
