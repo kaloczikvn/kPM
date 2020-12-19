@@ -356,7 +356,7 @@ function Match:OnFirstHalf(p_DeltaTime)
 
     -- TODO: FIXME
     -- When start ends we need to update the UI's timer. Its kinda hacky now, needs a better solution
-    if self.m_UpdateTicks[GameStates.FirstHalf] >= 0.5 and self.m_UpdateTicks[GameStates.FirstHalf] <= 2.0 then
+    if self.m_UpdateTicks[GameStates.FirstHalf] >= 0.25 and self.m_UpdateTicks[GameStates.FirstHalf] <= 1.5 then
         self.m_Server:SetClientTimer(kPMConfig.MaxRoundTime)
     end
 
@@ -364,6 +364,7 @@ function Match:OnFirstHalf(p_DeltaTime)
         -- Get the player counts
         local s_AttackerAliveCount, s_AttackerDeadCount, s_AttackerTotalCount, s_DefenderAliveCount, s_DefenderDeadCount, s_DefenderTotalCount = self:GetPlayerCounts()
 
+        self:CheckTeamCounts(s_AttackerTotalCount, s_DefenderTotalCount)
         -- The round is running as expected, check the ending conditions
 
         -- Which are if all attackers are dead
@@ -506,7 +507,7 @@ function Match:OnSecondHalf(p_DeltaTime)
 
     -- TODO: FIXME
     -- When start ends we need to update the UI's timer. Its kinda hacky now, needs a better solution
-    if self.m_UpdateTicks[GameStates.SecondHalf] >= 0.5 and self.m_UpdateTicks[GameStates.SecondHalf] <= 2.0 then
+    if self.m_UpdateTicks[GameStates.SecondHalf] >= 0.25 and self.m_UpdateTicks[GameStates.SecondHalf] <= 1.5 then
         self.m_Server:SetClientTimer(kPMConfig.MaxRoundTime)
     end
 
@@ -514,6 +515,7 @@ function Match:OnSecondHalf(p_DeltaTime)
         -- Get the player counts
         local s_AttackerAliveCount, s_AttackerDeadCount, s_AttackerTotalCount, s_DefenderAliveCount, s_DefenderDeadCount, s_DefenderTotalCount = self:GetPlayerCounts()
 
+        self:CheckTeamCounts(s_AttackerTotalCount, s_DefenderTotalCount)
         -- The round is running as expected, check the ending conditions
 
         -- Which are if all attackers are dead
@@ -623,6 +625,13 @@ function Match:IsAnyTeamWon()
         NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound, "nil")
         self.m_Server:ChangeGameState(GameStates.EndGame)
         return
+    end
+end
+
+function Match:CheckTeamCounts(p_AttackerTotalCount, p_DefenderTotalCount)
+    if p_AttackerTotalCount == 0 or p_DefenderTotalCount == 0 then
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound, "nil")
+        self.m_Server:ChangeGameState(GameStates.EndGame)
     end
 end
 
