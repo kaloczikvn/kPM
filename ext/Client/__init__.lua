@@ -154,9 +154,30 @@ function kPMClient:OnSetSelectedTeam(p_Team)
         return
     end
 
-    if p_Team == 2 then
+    if p_Team == 3 then -- auto-join
+        local s_Attackers = PlayerManager:GetPlayersByTeam(self.m_AttackersTeamId)
+        local s_Defenders = PlayerManager:GetPlayersByTeam(self.m_DefendersTeamId)
+
+        local s_AttackersCount = 0
+        for index, l_Player in pairs(s_Attackers) do
+            s_AttackersCount = s_AttackersCount + 1
+        end
+
+        local s_DefendersCount = 0
+        for index, l_Player in pairs(s_Defenders) do
+            s_DefendersCount = s_DefendersCount + 1
+        end
+
+        if s_AttackersCount > s_DefendersCount then
+            NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_DefendersTeamId)
+        elseif s_AttackersCount < s_DefendersCount then
+            NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_AttackersTeamId)
+        else
+            NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_AttackersTeamId)
+        end
+    elseif p_Team == 2 then -- attackers
         NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_AttackersTeamId)
-    else
+    else -- defenders
         NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_DefendersTeamId)
     end
 end

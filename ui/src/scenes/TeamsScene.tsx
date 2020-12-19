@@ -1,5 +1,6 @@
 import React from "react";
 import Title from "../components/Title";
+import { GameTypes } from "../helpers/GameTypes";
 import { Teams } from "../helpers/Teams";
 
 import './TeamsScene.scss';
@@ -8,9 +9,10 @@ interface Props {
     show: boolean;
     selectedTeam: Teams;
     setSelectedTeam: (team: Teams) => void;
+    gameType: GameTypes|null;
 }
 
-const TeamsScene: React.FC<Props> = ({ show, selectedTeam, setSelectedTeam }) => {
+const TeamsScene: React.FC<Props> = ({ show, setSelectedTeam, gameType }) => {
     const setTeam = (team: Teams) => {
         setSelectedTeam(team);
 
@@ -28,6 +30,9 @@ const TeamsScene: React.FC<Props> = ({ show, selectedTeam, setSelectedTeam }) =>
                     <div className="teamsList">
                         <button className={"btn border-btn primary"} onClick={() => setTeam(Teams.Attackers)}>Attackers</button>
                         <button className={"btn border-btn secondary"} onClick={() => setTeam(Teams.Defenders)}>Defenders</button>
+                        {(gameType !== null && gameType === GameTypes.Public) &&
+                            <button className={"btn border-btn"} onClick={() => setTeam(Teams.AutoJoin)}>Auto - Join</button>
+                        }
                         <hr/>
                         <button className={"btn border-btn disabled"}>Spectator</button>
                     </div>

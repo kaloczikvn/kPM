@@ -288,6 +288,7 @@ const App: React.FC = () => {
                     show={showTeamsPage}
                     selectedTeam={selectedTeam}
                     setSelectedTeam={(team: Teams) => setTeam(team)}
+                    gameType={gameType}
                 />
                 <LoadoutScene
                     show={showLoadoutPage}
