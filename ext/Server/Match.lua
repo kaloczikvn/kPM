@@ -1039,13 +1039,15 @@ function Match:SpawnPlayer(p_Player, p_Transform, p_Pose, p_SoldierBp, p_KnifeOn
 
     if p_KnifeOnly then
         local knife = ResourceManager:SearchForDataContainer('Weapons/Knife/U_Knife')
-        p_Player:SelectWeapon(WeaponSlot.WeaponSlot_0, knife, {})
+        p_Player:SelectWeapon(WeaponSlot.WeaponSlot_5, knife, {})
+        p_Player:SelectWeapon(WeaponSlot.WeaponSlot_7, knife, {})
     else
         local l_Loadout = p_SelectedKit.Weapons
         if l_Loadout == nil then
             print("err: something is really wrong here, spawn with a knife then...")
             local knife = ResourceManager:SearchForDataContainer('Weapons/Knife/U_Knife')
-            p_Player:SelectWeapon(WeaponSlot.WeaponSlot_0, knife, {})
+            p_Player:SelectWeapon(WeaponSlot.WeaponSlot_5, knife, {})
+            p_Player:SelectWeapon(WeaponSlot.WeaponSlot_7, knife, {})
         end
 
         local l_WeaponIndex = 0;
@@ -1059,7 +1061,18 @@ function Match:SpawnPlayer(p_Player, p_Transform, p_Pose, p_SoldierBp, p_KnifeOn
                 l_Attachments = p_SelectedKit.Attachments
             end
 
-            p_Player:SelectWeapon(l_WeaponIndex, l_LoadoutItem, l_Attachments)
+            if l_WeaponIndex == 0 then --primary
+                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_0, l_LoadoutItem, l_Attachments)
+            elseif l_WeaponIndex == 1 then --secondary
+                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_1, l_LoadoutItem, l_Attachments)
+            elseif l_WeaponIndex == 2 then --tactical
+                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_3, l_LoadoutItem, l_Attachments)
+            elseif l_WeaponIndex == 3 then --lethal
+                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_6, l_LoadoutItem, l_Attachments)
+            elseif l_WeaponIndex == 4 then --knife
+                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_5, l_LoadoutItem, l_Attachments)
+                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_7, l_LoadoutItem, l_Attachments)
+            end
     
             l_WeaponIndex = l_WeaponIndex + 1;
 
