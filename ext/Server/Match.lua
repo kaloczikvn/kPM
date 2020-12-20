@@ -333,6 +333,23 @@ function Match:SwitchTeams()
 end
 
 function Match:OnFirstHalf(p_DeltaTime)
+    -- Handle the case of when a round ends then restart the round
+    if self.m_UpdateTicks[GameStates.FirstHalf] >= 8000.0 then
+
+        if self.m_UpdateTicks[GameStates.FirstHalf] == 8000.0 then
+            self.m_Server:SetClientTimer(kPMConfig.MaxTransititionTime)
+            NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        end
+
+        if self.m_UpdateTicks[GameStates.FirstHalf] >= (8000.0 + kPMConfig.MaxTransititionTime) then
+            self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+            return
+        end
+
+        self.m_UpdateTicks[GameStates.FirstHalf] = self.m_UpdateTicks[GameStates.FirstHalf] + p_DeltaTime
+        return
+    end
+
     -- Handle the case of when a round first starts, otherwise it will run "normal" code
     if self.m_UpdateTicks[GameStates.FirstHalf] == 0.0 then
         -- Switch to strat time for 5 seconds
@@ -386,7 +403,7 @@ function Match:OnFirstHalf(p_DeltaTime)
             self:IsRoundHalfTime()
 
             -- Set this round to be over
-            self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+            self.m_UpdateTicks[GameStates.FirstHalf] = 8000.0
             return
         end
         
@@ -410,7 +427,7 @@ function Match:OnFirstHalf(p_DeltaTime)
             self:IsRoundHalfTime()
 
             -- Set this round to be over
-            self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+            self.m_UpdateTicks[GameStates.FirstHalf] = 8000.0
             return
         end
 
@@ -437,7 +454,7 @@ function Match:OnFirstHalf(p_DeltaTime)
 
                 -- Leave the timer at 0.0 in the same state, it will catch at the top
                 -- of this function and enable strat mode
-                self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+                self.m_UpdateTicks[GameStates.FirstHalf] = 8000.0
                 return
             end
         else
@@ -453,7 +470,7 @@ function Match:OnFirstHalf(p_DeltaTime)
     
                 -- Leave the timer at 0.0 in the same state, it will catch at the top
                 -- of this function and enable strat mode
-                self.m_UpdateTicks[GameStates.FirstHalf] = 0.0
+                self.m_UpdateTicks[GameStates.FirstHalf] = 8000.0
                 return
             end
         end
@@ -475,8 +492,17 @@ function Match:OnFirstToHalf(p_DeltaTime)
 end
 
 function Match:OnHalfTime(p_DeltaTime)
-    self:SwitchTeams()
-    self.m_Server:ChangeGameState(GameStates.HalfToSecond)
+    if self.m_UpdateTicks[GameStates.HalfTime] == 0.0 then
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        self.m_Server:SetClientTimer(kPMConfig.MaxTransititionTime)
+    end
+
+    if self.m_UpdateTicks[GameStates.HalfTime] >= kPMConfig.MaxTransititionTime then
+        self:SwitchTeams()
+        self.m_Server:ChangeGameState(GameStates.HalfToSecond)
+    end
+
+    self.m_UpdateTicks[GameStates.HalfTime] = self.m_UpdateTicks[GameStates.HalfTime] + p_DeltaTime
 end
 
 function Match:OnHalfToSecond(p_DeltaTime)
@@ -484,6 +510,23 @@ function Match:OnHalfToSecond(p_DeltaTime)
 end
 
 function Match:OnSecondHalf(p_DeltaTime)
+    -- Handle the case of when a round ends then restart the round
+    if self.m_UpdateTicks[GameStates.SecondHalf] >= 8000.0 then
+
+        if self.m_UpdateTicks[GameStates.SecondHalf] == 8000.0 then
+            self.m_Server:SetClientTimer(kPMConfig.MaxTransititionTime)
+            NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        end
+
+        if self.m_UpdateTicks[GameStates.SecondHalf] >= (8000.0 + kPMConfig.MaxTransititionTime) then
+            self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+            return
+        end
+
+        self.m_UpdateTicks[GameStates.SecondHalf] = self.m_UpdateTicks[GameStates.SecondHalf] + p_DeltaTime
+        return
+    end
+
     -- Handle the case of when a round first starts, otherwise it will run "normal" code
     if self.m_UpdateTicks[GameStates.SecondHalf] == 0.0 then
         -- Switch to strat time for 5 seconds
@@ -538,11 +581,9 @@ function Match:OnSecondHalf(p_DeltaTime)
             self:IsAnyTeamWon()
 
             -- Set this round to be over
-            self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+            self.m_UpdateTicks[GameStates.SecondHalf] = 8000.0
             return
         end
-        
-        -- TODO: If the objectives have been completed
 
         -- If all defenders are dead
         if s_DefenderAliveCount == 0 then
@@ -562,7 +603,7 @@ function Match:OnSecondHalf(p_DeltaTime)
             self:IsAnyTeamWon()
 
             -- Set this round to be over
-            self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+            self.m_UpdateTicks[GameStates.SecondHalf] = 8000.0
             return
         end
 
@@ -589,7 +630,7 @@ function Match:OnSecondHalf(p_DeltaTime)
     
                 -- Leave the timer at 0.0 in the same state, it will catch at the top
                 -- of this function and enable strat mode
-                self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+                self.m_UpdateTicks[GameStates.SecondHalf] = 8000.0
                 return
             end
         else
@@ -605,7 +646,7 @@ function Match:OnSecondHalf(p_DeltaTime)
     
                 -- Leave the timer at 0.0 in the same state, it will catch at the top
                 -- of this function and enable strat mode
-                self.m_UpdateTicks[GameStates.SecondHalf] = 0.0
+                self.m_UpdateTicks[GameStates.SecondHalf] = 8000.0
                 return
             end
         end
