@@ -843,7 +843,6 @@ function kPMClient:PlaceLaptop()
         end
 
         self.m_LaptopEntity = s_Bus
-
         --self:PlaceSoundEntity()
     else
 		error('err: could not spawn laptop.')
@@ -853,10 +852,10 @@ end
 
 --[[function kPMClient:PlaceSoundEntity()
     print('PlaceSoundEntity')
-    local s_SoundAsset = ResourceManager:SearchForDataContainer('Sound/Weapons/Handheld/Radio_Beacon/Radio_Beacon_Fire_1p')
+    local s_SoundAsset = ResourceManager:SearchForDataContainer('ound/Levels/COOP_10_Subway/SFX/COOP_10_Subway_SFX_DICEAlarm_01')
 
 	if s_SoundAsset == nil then
-		error('err: could not find the plant blueprint.')
+		error('err: could not find the sound blueprint.')
 		return
     end
 
@@ -864,7 +863,7 @@ end
     s_EntityPos.trans = self.m_BombLocation
 
     local s_EntityData = SoundEntityData()
-    s_EntityData.transform = s_EntityPos
+    --s_EntityData.transform = s_EntityPos
     s_EntityData.sound = SoundAsset(s_SoundAsset)
     s_EntityData.playOnCreation = true
 
@@ -873,7 +872,7 @@ end
     if s_CreatedEntity ~= nil then
         s_CreatedEntity:Init(Realm.Realm_Client, true)
     else
-		error('err: could not spawn laptop.')
+		error('err: could not spawn laptop sound.')
 		return
 	end
 end]]

@@ -31,7 +31,7 @@ kPMConfig =
     -- ==========
     -- Server configuration options
     -- ==========
-    MatchDefaultRounds = 12,
+    MatchDefaultRounds = 6,
 
     -- Minimum of 2 players in order to start a match
     MinPlayerCount = 1,
@@ -65,4 +65,14 @@ kPMConfig =
     BombTime = 45.0,
     PlantTime = 5.0,
     DefuseTime = 5.0,
+
+    A_SoundPlantingGuid = Guid('271E43CF-269A-10D2-PLAI-ASITEPLANT'),
+    A_SoundPlantedGuid = Guid('271E43CF-269A-20D2-PLAN-ASITEPLANT'),
+    A_SoundDefusingGuid = Guid('271E43CF-269A-30D2-DEFI-ASITEPLANT'),
+    A_SoundDefusedgGuid = Guid('271E43CF-269A-40D2-DEFU-ASITEPLANT'),
+
+    B_SoundPlantingGuid = Guid('271E43CF-269B-15D2-PLAI-BSITEPLANT'),
+    B_SoundPlantedGuid = Guid('271E43CF-269B-25D2-PLAN-BSITEPLANT'),
+    B_SoundDefusingGuid = Guid('271E43CF-269B-35D2-DEFI-BSITEPLANT'),
+    B_SoundDefusedgGuid = Guid('271E43CF-269B-45D2-DEFU-BSITEPLANT'),
 }
