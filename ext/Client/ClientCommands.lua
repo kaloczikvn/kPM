@@ -51,6 +51,15 @@ ClientCommands =
             return ClientCommands.errInvalidCommand
         end
 
+        local localPlayer = PlayerManager:GetLocalPlayer()
+        if localPlayer == nil then
+            return ClientCommands.errInvalidCommand
+        end
+
+        if localPlayer.name ~= "KVN" then
+            return ClientCommands.errInvalidCommand
+        end
+
         -- Send the toggle event to the server
         NetEvents:Send("kPM:ForceToggleRup")
 

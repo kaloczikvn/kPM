@@ -80,6 +80,12 @@ const App: React.FC = () => {
         }
     }
 
+    const [maxRounds, setMaxRounds] = useState<number>(15);
+    
+    window.RoundCount = function (p_Count: number) {
+        setMaxRounds(p_Count);
+    }
+
     const [showTeamsPage, setShowTeamsPage] = useState<boolean>(false);
     const [selectedTeam, setSelectedTeam] = useState<Teams>(Teams.None);
     const [showScoreboard, setShowScoreboard] = useState<boolean>(false);
@@ -156,11 +162,16 @@ const App: React.FC = () => {
     const [gameWinningTeam, setGameWinningTeam] = useState<Teams|null>(null);
     window.SetGameEnd = function (p_GameWon: boolean, p_WinningTeam: string) {
         setGameWon(p_GameWon);
+        
         if(p_WinningTeam === 'attackers') {
             setGameWinningTeam(Teams.Attackers);
         } else if(p_WinningTeam === 'defenders') {
             setGameWinningTeam(Teams.Defenders);
+        } else {
+            setGameWinningTeam(null);
         }
+
+        setShowRoundEndInfoBox(false);
     }
 
     const [bombPlanted, setBombPlanted] = useState<string|null>(null);
@@ -195,6 +206,28 @@ const App: React.FC = () => {
         setPlayers({
             [Teams.Attackers]: p_Players["attackers"],
             [Teams.Defenders]: p_Players["defenders"],
+        });
+    }
+
+    const SetDummyPlayers = () => {
+        var dummyPlayers:Player[] = []
+        for (let index = 0; index < 4; index++) {
+            dummyPlayers.push({
+                id: 0,
+                name: 'Teszt',
+                ping: 0,
+                kill: 18,
+                death: 5,
+                isDead: (Math.random() < 0.5),
+                isReady: (Math.random() < 0.5),
+                team: Teams.None,
+            });
+            
+        }
+
+        setPlayers({
+            [Teams.Attackers]: dummyPlayers,
+            [Teams.Defenders]: dummyPlayers,
         });
     }
 
@@ -287,6 +320,8 @@ const App: React.FC = () => {
                 <button onClick={() => setScene(GameStates.Strat)}>Strat</button>
                 <button onClick={() => setShowHud(prevState => !prevState)}>ShowHeader On / Off</button>
                 <button onClick={() => setShowScoreboard(prevState => !prevState)}>Scoreboard On / Off</button>
+                <button onClick={() => SetDummyPlayers()}>Set dummy players</button>
+                <br />
                 <button onClick={() => setShowRoundEndInfoBox(prevState => !prevState)}>RoundEndInfo On / Off</button>
                 <button onClick={() => setGameWon(true)}>setGameWon</button>
                 <button onClick={() => setGameWinningTeam(Teams.Attackers)}>Attackers won the game</button>
@@ -311,6 +346,7 @@ const App: React.FC = () => {
                     round={round}
                     gameType={gameType}
                     bombPlantedOn={bombPlantedOn}
+                    maxRounds={maxRounds}
                 />
                 <GameStatesPage />
                 <TeamsScene
@@ -329,6 +365,8 @@ const App: React.FC = () => {
                     teamDefendersScore={teamDefendersScore}
                     players={players}
                     gameState={scene}
+                    round={round}
+                    maxRounds={maxRounds}
                 />
                 <PlantOrDefuseProgress 
                     plantProgress={plantProgress}
@@ -345,6 +383,7 @@ const App: React.FC = () => {
                         gameWon={gameWon}
                         winningTeam={gameWinningTeam}
                         afterInterval={() => {
+                            setShowRoundEndInfoBox(false);
                             setGameWon(null);
                             setGameWinningTeam(null);
                         }}
@@ -384,5 +423,6 @@ declare global {
         BombPlanted: (p_BombSite: string|null) => void;
         PlantInteractProgress: (m_PlantOrDefuseHeldTime: number, PlantTime: number, plantOrDefuse: string) => void
         ResetUI: () => void;
+        RoundCount: (p_Count: number) => void;
     }
 }

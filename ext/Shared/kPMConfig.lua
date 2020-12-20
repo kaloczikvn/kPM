@@ -31,7 +31,7 @@ kPMConfig =
     -- ==========
     -- Server configuration options
     -- ==========
-    MatchDefaultRounds = 12,
+    MatchDefaultRounds = 15,
 
     -- Minimum of 2 players in order to start a match
     MinPlayerCount = 1,

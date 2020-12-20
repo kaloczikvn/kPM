@@ -459,6 +459,8 @@ function Match:OnFirstHalf(p_DeltaTime)
             end
         else
             if self.m_UpdateTicks[GameStates.FirstHalf] >= self.m_BombTime then
+                NetEvents:Broadcast("kPM:BombKaboom")
+                
                 self.m_Attackers:RoundWon(self.m_CurrentRound)
                 self.m_Defenders:RoundLoss(self.m_CurrentRound)
                 self.m_Server:SetRoundEndInfoBox(self.m_Attackers:GetTeamId())
@@ -487,17 +489,26 @@ function Match:IsRoundHalfTime()
 end
 
 function Match:OnFirstToHalf(p_DeltaTime)
-    self:KillAllPlayers(false)
-    self.m_Server:ChangeGameState(GameStates.HalfTime)
+    if self.m_UpdateTicks[GameStates.FirstToHalf] == 0.0 then
+        NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+        self.m_Server:SetClientTimer(kPMConfig.MaxTransititionTime)
+    end
+
+    if self.m_UpdateTicks[GameStates.FirstToHalf] >= kPMConfig.MaxTransititionTime then
+        self:KillAllPlayers(false)
+        self.m_Server:ChangeGameState(GameStates.HalfTime)
+    end
+
+    self.m_UpdateTicks[GameStates.FirstToHalf] = self.m_UpdateTicks[GameStates.FirstToHalf] + p_DeltaTime
 end
 
 function Match:OnHalfTime(p_DeltaTime)
     if self.m_UpdateTicks[GameStates.HalfTime] == 0.0 then
         NetEvents:Broadcast("kPM:UpdateHeader", self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
-        self.m_Server:SetClientTimer(kPMConfig.MaxTransititionTime)
+        self.m_Server:SetClientTimer(kPMConfig.MaxStratTime)
     end
 
-    if self.m_UpdateTicks[GameStates.HalfTime] >= kPMConfig.MaxTransititionTime then
+    if self.m_UpdateTicks[GameStates.HalfTime] >= kPMConfig.MaxStratTime then
         self:SwitchTeams()
         self.m_Server:ChangeGameState(GameStates.HalfToSecond)
     end
@@ -635,6 +646,8 @@ function Match:OnSecondHalf(p_DeltaTime)
             end
         else
             if self.m_UpdateTicks[GameStates.SecondHalf] >= self.m_BombTime then
+                NetEvents:Broadcast("kPM:BombKaboom")
+
                 self.m_Attackers:RoundWon(self.m_CurrentRound)
                 self.m_Defenders:RoundLoss(self.m_CurrentRound)
                 self.m_Server:SetRoundEndInfoBox(self.m_Attackers:GetTeamId())

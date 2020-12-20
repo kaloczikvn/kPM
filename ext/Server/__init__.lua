@@ -67,6 +67,9 @@ function kPMServer:RegisterEvents()
     -- Events from the client
     self.m_ToggleRupEvent = NetEvents:Subscribe("kPM:ToggleRup", self, self.OnToggleRup)
     self.m_TogglePlantEvent = NetEvents:Subscribe("kPM:TogglePlant", self, self.OnTogglePlant)
+
+    self.m_PlaySoundPlantingEvent = NetEvents:Subscribe("kPM:PlaySoundPlanting", self, self.OnPlaySoundPlanting)
+
     -- TODO: This is a debug only function
     self.m_ForceToggleRupEvent = NetEvents:Subscribe("kPM:ForceToggleRup", self, self.OnForceToggleRup)
     self.m_PlayerConnectedEvent = NetEvents:Subscribe("kPM:PlayerConnected", self, self.OnPlayerConnected)
@@ -364,6 +367,17 @@ function kPMServer:OnTogglePlant(p_Player, p_PlantOrDefuse, p_BombSite, p_BombLo
     else
         print("err: player " .. p_Player.name .. " tried to " .. p_PlantOrDefuse .. " in non-round?")
     end
+end
+
+function kPMServer:OnPlaySoundPlanting(p_Player, p_Trans)
+    print('Someone planting on:')
+    print(p_Trans)
+    
+    if p_Trans == nil then
+        return
+    end
+
+    NetEvents:Broadcast("kPM:PlaySoundPlanting", p_Trans)
 end
 
 function kPMServer:OnPlayerChat(p_Player, p_RecipientMask, p_Message)

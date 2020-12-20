@@ -15,9 +15,21 @@ interface Props {
     showHud: boolean;
     gameType: GameTypes;
     bombPlantedOn: string|null;
+    maxRounds: number;
 }
 
-const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAttackersScore, teamDefendersScore, currentScene, round, showHud, gameType, bombPlantedOn }) => {
+const Header: React.FC<Props> = ({ 
+    teamAttackersClan,
+    teamDefendersClan,
+    teamAttackersScore,
+    teamDefendersScore,
+    currentScene,
+    round,
+    showHud,
+    gameType,
+    bombPlantedOn,
+    maxRounds
+ }) => {
     window.SetTimer = function(p_Time: number) {
         setTime(1000 * p_Time);
         start();
@@ -78,7 +90,7 @@ const Header: React.FC<Props> = ({ teamAttackersClan, teamDefendersClan, teamAtt
                                     </>
                                 :
                                     <>
-                                        {GameStatesRoundString[currentScene].replace('{round}', (round?.toString()??'1'))??''}
+                                        {GameStatesRoundString[currentScene].replace('{round}', ((round?.toString()??'1') + '/' + maxRounds))??''}
                                     </>
                                 }
                             </span>

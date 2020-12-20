@@ -54,6 +54,12 @@ function kPMClient:__init()
 
     self.m_FirstSpawn = false
 
+    self.m_ExplosionEntityData = nil
+
+    self.m_PlantSoundEntityData = nil
+    self.m_PlantSent = false
+    self.m_DefuseSoundEntityData = nil
+
     -- Freecamera
     self.m_FreeCam = FreeCam()
 
@@ -96,6 +102,8 @@ function kPMClient:RegisterEvents()
     -- Engine tick
     self.m_EngineUpdateEvent = Events:Subscribe("Engine:Update", self, self.OnEngineUpdate)
 
+    self.m_PartitionLoadedEvent = Events:Subscribe('Partition:Loaded', self, self.OnPartitionLoaded)
+
     -- Game State events
     self.m_GameStateChangedEvent = NetEvents:Subscribe("kPM:GameStateChanged", self, self.OnGameStateChanged)
 
@@ -120,6 +128,7 @@ function kPMClient:RegisterEvents()
     -- Level events
     self.m_LevelDestroyEvent = Events:Subscribe("Level:Destroy", self, self.OnLevelDestroyed)
     self.m_LevelLoadedEvent = Events:Subscribe("Level:Loaded", self, self.OnLevelLoaded)
+    self.m_LevelLoadResourcesEvent = Events:Subscribe("Level:LoadResources", self, self.OnLevelLoadResources)
 
     -- Client events
     self.m_ClientUpdateInputEvent = Events:Subscribe('Client:UpdateInput', self, self.OnUpdateInput)
@@ -127,7 +136,6 @@ function kPMClient:RegisterEvents()
     -- WebUI
     self.m_SetSelectedTeamEvent = Events:Subscribe("WebUISetSelectedTeam", self, self.OnSetSelectedTeam)
     self.m_SetSelectedLoadoutEvent = Events:Subscribe("WebUISetSelectedLoadout", self, self.OnSetSelectedLoadout)
-    
     
     self.m_StartWebUITimerEvent = NetEvents:Subscribe("kPM:StartWebUITimer", self, self.OnStartWebUITimer)
     self.m_UpdateHeaderEvent = NetEvents:Subscribe("kPM:UpdateHeader", self, self.OnUpdateHeader)
@@ -137,6 +145,9 @@ function kPMClient:RegisterEvents()
 
     self.m_BombPlantedEvent = NetEvents:Subscribe("kPM:BombPlanted", self, self.OnBombPlanted)
     self.m_BombDefusedEvent = NetEvents:Subscribe("kPM:BombDefused", self, self.OnBombDefused)
+    self.m_BombKaboomEvent = NetEvents:Subscribe("kPM:BombKaboom", self, self.OnBombKaboom)
+
+    self.m_PlaySoundPlantingEvent = NetEvents:Subscribe("kPM:PlaySoundPlanting", self, self.OnPlaySoundPlanting)
 
     self.m_UpdateTeamsEvent = NetEvents:Subscribe("kPM:UpdateTeams", self, self.OnUpdateTeams)
 
@@ -145,6 +156,9 @@ function kPMClient:RegisterEvents()
 
     -- Cleanup Events
     self.m_CleanupEvent = NetEvents:Subscribe("kPM:Cleanup", self, self.OnCleanup)
+end
+
+function kPMClient:OnPartitionLoaded(p_Partition)
 end
 
 function kPMClient:UnregisterEvents()
@@ -204,8 +218,8 @@ function kPMClient:RegisterCommands()
     print("registering commands")
     
     -- Register console commands for users to leverage
-    self.m_PositionCommand = Console:Register("kpm_player_pos", "Displays the current player position", ClientCommands.PlayerPosition)
-    self.m_ReadyUpCommand = Console:Register("kpm_ready_up", "Toggles the ready up state", ClientCommands.ReadyUp)
+    --self.m_PositionCommand = Console:Register("kpm_player_pos", "Displays the current player position", ClientCommands.PlayerPosition)
+    --self.m_ReadyUpCommand = Console:Register("kpm_ready_up", "Toggles the ready up state", ClientCommands.ReadyUp)
     self.m_ForceReadyUpCommand = Console:Register("kpm_force_ready_up", "Toggles all players to ready up state", ClientCommands.ForceReadyUp)
 end
 
@@ -223,6 +237,15 @@ end
 function kPMClient:OnLevelLoaded()
     NetEvents:Send("kPM:PlayerConnected")
     WebUI:ExecuteJS("OpenCloseTeamMenu(true);")
+    WebUI:ExecuteJS("RoundCount(" .. kPMConfig.MatchDefaultRounds .. ");")
+end
+
+function kPMClient:OnLevelLoadResources()
+    print('OnLevelLoadResources')
+    self.m_ExplosionEntityData = nil
+
+    self.m_PlantSoundEntityData = nil
+    self.m_DefuseSoundEntityData = nil
 end
 
 function kPMClient:OnUpdateInput(p_DeltaTime)
@@ -232,12 +255,12 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     end
 
     -- TODO: Remove me
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F8) then
+    --[[if InputManager:WentKeyDown(InputDeviceKeys.IDK_F8) then
         NetEvents:Send("kPM:TogglePlant", "plant", "A", Vec3(-341.6533203125, 71.388473510742, 297.3525390625), true)
-    end
+    end]]
 
     -- Open Team menu
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_T) then
         -- If the player never spawned we should force him to pick a team and a loadout first
         if self.m_FirstSpawn then
             WebUI:ExecuteJS("OpenCloseTeamMenu();")
@@ -245,28 +268,12 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     end
 
     -- Open Loadout menu
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F10) then
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_I) then
         -- If the player never spawned we should force him to pick a team and a loadout first
         if self.m_FirstSpawn then
             WebUI:ExecuteJS("OpenCloseLoadoutMenu();")
         end
     end
-
-    -- Manually check for toggles
-    --[[if InputManager:WentKeyDown(InputDeviceKeys.IDK_F4) then
-        print("enabling freecam movement")
-        self.m_FreeCam:OnEnableFreeCamMovement()
-    end
-
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F5) then
-        print("control start")
-        self.m_FreeCam:OnControlStart()
-    end
-
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F6) then
-        print("control end")
-        self.m_FreeCam:OnControlEnd()
-    end]]
 end
 
 function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
@@ -281,8 +288,7 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
 
     -- Tab held or not
     self:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
-
-    local s_SelectedPlant = self:IsPlayerInsideThePlantZone()
+    self:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
 
     -- Check to see if we are in the warmup state to get rup status
     if self.m_GameState == GameStates.Warmup then
@@ -317,61 +323,6 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
 
             -- Reset our rup timer
             self.m_RupHeldTime = 0.0
-        end
-    elseif s_SelectedPlant ~= nil and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
-        -- Get the interact level
-        local s_InteractLevel = p_Cache:GetLevel(InputConceptIdentifiers.ConceptInteract)
-
-        -- If the player is holding the interact key then update our variables and clear it for the next frame
-        if s_InteractLevel > 0.0 then
-            self.m_PlantOrDefuseHeldTime = self.m_PlantOrDefuseHeldTime + p_DeltaTime
-            p_Cache:SetLevel(InputConceptIdentifiers.ConceptInteract, 0.0)
-            self:DisablePlayerInputs()
-        else
-            self:EnablePlayerInputs()
-
-            -- If the client isn't holding interact reset our timer
-            self.m_PlantOrDefuseHeldTime = 0.0
-        end
-
-        if s_Player == nil then
-            print("err: could not get local player.")
-            return
-        end
-
-        if s_Player.teamId == self.m_AttackersTeamId then
-            -- If player is attacker
-            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantOrDefuseHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("plant") .. "');")
-
-            -- Toggle the plant state
-            if self.m_PlantOrDefuseHeldTime >= kPMConfig.PlantTime then
-                -- Send the plant event
-                NetEvents:Send("kPM:TogglePlant", "plant", s_SelectedPlant, s_Player.soldier.worldTransform.trans)
-                print("client planted")
-
-                -- Reset our plant or defuse timer
-                self.m_PlantOrDefuseHeldTime = 0.0
-            end
-        elseif s_Player.teamId == self.m_DefendersTeamId then
-            -- If player is defender
-            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantOrDefuseHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("defuse") .. "');")
-
-            -- Toggle the defuse state
-            if self.m_PlantOrDefuseHeldTime >= kPMConfig.DefuseTime then
-                -- Send the defuse event
-                NetEvents:Send("kPM:TogglePlant", "defuse", s_SelectedPlant)
-                print("client defused")
-
-                -- Reset our plant or defuse timer
-                self.m_PlantOrDefuseHeldTime = 0.0
-            end
-        end
-    else 
-        if self.m_PlantOrDefuseHeldTime > 0.0 and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
-            -- Re-enable inputs after planting
-            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(0) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("defuse") .. "');")
-            self:EnablePlayerInputs()
-            self.m_PlantOrDefuseHeldTime = 0
         end
     end
 
@@ -417,15 +368,88 @@ function kPMClient:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
             self:OnUpdateScoreboard(l_Player)
         end
 
-        if l_Player.alive == true then
-            WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', l_ScoreboardActive) .. ");")
+        WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', l_ScoreboardActive) .. ");")
+    end
+end
+
+function kPMClient:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
+    local s_SelectedPlant = self:IsPlayerInsideThePlantZone()
+
+    local s_Player = PlayerManager:GetLocalPlayer()
+
+    local s_PlantSent = self.m_PlantSent
+
+    if s_SelectedPlant ~= nil and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
+        -- Get the interact level
+        local s_InteractLevel = p_Cache:GetLevel(InputConceptIdentifiers.ConceptInteract)
+
+        -- If the player is holding the interact key then update our variables and clear it for the next frame
+        if s_InteractLevel > 0.0 then
+            self.m_PlantOrDefuseHeldTime = self.m_PlantOrDefuseHeldTime + p_DeltaTime
+            p_Cache:SetLevel(InputConceptIdentifiers.ConceptInteract, 0.0)
+            s_PlantSent = true
+            self:DisablePlayerInputs()
+        else
+            s_PlantSent = false
+            self:EnablePlayerInputs()
+
+            -- If the client isn't holding interact reset our timer
+            self.m_PlantOrDefuseHeldTime = 0.0
+        end
+
+        if s_Player == nil then
+            print("err: could not get local player.")
+            return
+        end
+
+        if s_PlantSent ~= self.m_PlantSent then
+            self.m_PlantSent = s_PlantSent
+
+            if s_PlantSent == true then
+                NetEvents:Send("kPM:PlaySoundPlanting", s_Player.soldier.worldTransform.trans)
+            end
+        end
+
+        if s_Player.teamId == self.m_AttackersTeamId then
+            -- If player is attacker
+            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantOrDefuseHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("plant") .. "');")
+
+            -- Toggle the plant state
+            if self.m_PlantOrDefuseHeldTime >= kPMConfig.PlantTime then
+                -- Send the plant event
+                NetEvents:Send("kPM:TogglePlant", "plant", s_SelectedPlant, s_Player.soldier.worldTransform.trans)
+                print("client planted")
+
+                -- Reset our plant or defuse timer
+                self.m_PlantOrDefuseHeldTime = 0.0
+            end
+        elseif s_Player.teamId == self.m_DefendersTeamId then
+            -- If player is defender
+            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(self.m_PlantOrDefuseHeldTime) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("defuse") .. "');")
+
+            -- Toggle the defuse state
+            if self.m_PlantOrDefuseHeldTime >= kPMConfig.DefuseTime then
+                -- Send the defuse event
+                NetEvents:Send("kPM:TogglePlant", "defuse", s_SelectedPlant)
+                print("client defused")
+
+                -- Reset our plant or defuse timer
+                self.m_PlantOrDefuseHeldTime = 0.0
+            end
+        end
+    else 
+        if self.m_PlantOrDefuseHeldTime > 0.0 and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
+            -- Re-enable inputs after planting
+            WebUI:ExecuteJS("PlantInteractProgress(" .. tostring(0) ..", " .. tostring(kPMConfig.PlantTime) .. ", '" .. tostring("defuse") .. "');")
+            self:EnablePlayerInputs()
+            self.m_PlantOrDefuseHeldTime = 0
         end
     end
 end
 
+
 function kPMClient:OnEngineUpdate(p_DeltaTime, p_SimulationDeltaTime)
     -- TODO: Implement time related functionaity
-    
 end
 
 function kPMClient:OnRupStateChanged(p_WaitingOnPlayers, p_LocalRupStatus)
@@ -632,17 +656,17 @@ function kPMClient:OnSetGameEnd(p_WinnerTeamId)
 
     if p_WinnerTeamId == nil then
         WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "draw");')
-    end
-
-    local l_Player = PlayerManager:GetLocalPlayer()
-    if l_Player.teamId == p_WinnerTeamId then
-        isPlayerWinner = true
-    end
-    
-    if p_WinnerTeamId == self.m_AttackersTeamId then
-        WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "attackers");')
     else
-        WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "defenders");')
+        local l_Player = PlayerManager:GetLocalPlayer()
+        if l_Player.teamId == p_WinnerTeamId then
+            isPlayerWinner = true
+        end
+        
+        if p_WinnerTeamId == self.m_AttackersTeamId then
+            WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "attackers");')
+        else
+            WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "defenders");')
+        end
     end
 end
 
@@ -676,6 +700,99 @@ function kPMClient:OnBombDefused()
     self.m_BombLocation = nil
     self:DestroyLaptop()
     --WebUI:ExecuteJS('BombDefused();')
+end
+
+function kPMClient:OnBombKaboom()
+    local s_Data = self:GetExplosionEntityData()
+
+	if s_Data == nil then
+		print('Could not get explosion data')
+		return
+    end
+    
+	local s_Transform = LinearTransform()
+	s_Transform.trans = self.m_BombLocation
+
+	local s_Entity = EntityManager:CreateEntity(s_Data, s_Transform)
+
+	if s_Entity == nil then
+		print('Could not create kaboom entity.')
+		return
+    end 
+    
+	s_Entity = ExplosionEntity(s_Entity)
+	s_Entity:Detonate(s_Transform, Vec3(0, 1, 0), 1.0, nil)
+end
+
+function kPMClient:GetExplosionEntityData()
+   	-- Stole this from NoFaTe's battlefieldv mod
+	if self.m_ExplosionEntityData ~= nil then
+		return self.m_ExplosionEntityData
+    end
+    
+	local s_Original = ResourceManager:SearchForInstanceByGuid(Guid('F2D79077-51D0-455C-8707-FDD38E9EE3D7'))
+
+	if s_Original == nil then
+		print('Could not find explosion template')
+		return nil
+    end
+    
+	self.m_ExplosionEntityData = VeniceExplosionEntityData(s_Original:Clone())
+	self.m_ExplosionEntityData.innerBlastRadius = 10
+	self.m_ExplosionEntityData.blastRadius = 30
+	self.m_ExplosionEntityData.blastDamage = 1000
+	self.m_ExplosionEntityData.blastImpulse = 1000
+	self.m_ExplosionEntityData.hasStunEffect = true
+	self.m_ExplosionEntityData.shockwaveRadius = 55
+	self.m_ExplosionEntityData.shockwaveTime = 0.75
+	self.m_ExplosionEntityData.shockwaveDamage = 10
+	self.m_ExplosionEntityData.shockwaveImpulse = 200
+	self.m_ExplosionEntityData.cameraShockwaveRadius = 10
+
+	return self.m_ExplosionEntityData
+end
+
+function kPMClient:OnPlaySoundPlanting(p_Trans)
+    if p_Trans == nil then
+		print('No plant location')
+		return
+    end
+
+    local s_Data = self:GetPlantSoundEntityData()
+
+	if s_Data == nil then
+		print('Could not get sound data')
+		return
+    end
+    
+	local s_Transform = LinearTransform()
+	s_Transform.trans = p_Trans
+
+	local s_Entity = EntityManager:CreateEntity(s_Data, s_Transform)
+
+	if s_Entity == nil then
+		print('Could not create kaboom entity.')
+		return
+    end
+
+    s_Entity:FireEvent('Start')
+end
+
+function kPMClient:GetPlantSoundEntityData()
+       if self.m_PlantSoundEntityData ~= nil then
+		return self.m_PlantSoundEntityData
+    end
+    
+	local s_Original = ResourceManager:SearchForInstanceByGuid(Guid('9A715038-A22A-409A-AB33-E12B4338AA6A'))
+
+	if s_Original == nil then
+		print('Could not find sound template')
+		return nil
+    end
+    
+    self.m_PlantSoundEntityData = SoundEffectEntityData(s_Original:Clone())
+    
+	return self.m_PlantSoundEntityData
 end
 
 function kPMClient:OnCleanup(p_EntityType)
@@ -753,9 +870,6 @@ function kPMClient:IsPlayerInsideThePlantZone()
 
     -- Get the position vector
     local position = soldierLinearTransform.trans
-
-    -- print("A: " .. position:Distance(MapsConfig[l_LevelName]["PLANT_A"]["POS"].trans))
-    -- print("B: " .. position:Distance(MapsConfig[l_LevelName]["PLANT_B"]["POS"].trans))
 
     if localPlayer.teamId == self.m_AttackersTeamId and self.m_BombSite == nil and self.m_BombLocation == nil then
         -- If the player is attacker and the bomb is not planted
@@ -843,40 +957,11 @@ function kPMClient:PlaceLaptop()
         end
 
         self.m_LaptopEntity = s_Bus
-
-        --self:PlaceSoundEntity()
     else
 		error('err: could not spawn laptop.')
 		return
 	end
 end
-
---[[function kPMClient:PlaceSoundEntity()
-    print('PlaceSoundEntity')
-    local s_SoundAsset = ResourceManager:SearchForDataContainer('Sound/Weapons/Handheld/Radio_Beacon/Radio_Beacon_Fire_1p')
-
-	if s_SoundAsset == nil then
-		error('err: could not find the plant blueprint.')
-		return
-    end
-
-    local s_EntityPos = LinearTransform()
-    s_EntityPos.trans = self.m_BombLocation
-
-    local s_EntityData = SoundEntityData()
-    s_EntityData.transform = s_EntityPos
-    s_EntityData.sound = SoundAsset(s_SoundAsset)
-    s_EntityData.playOnCreation = true
-
-    local s_CreatedEntity = EntityManager:CreateEntity(s_EntityData, s_EntityPos)
-
-    if s_CreatedEntity ~= nil then
-        s_CreatedEntity:Init(Realm.Realm_Client, true)
-    else
-		error('err: could not spawn laptop.')
-		return
-	end
-end]]
 
 function kPMClient:DestroyLaptop()
     if self.m_LaptopEntity == nil then
