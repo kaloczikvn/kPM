@@ -11,12 +11,19 @@ function MapMarkerEntityDataGenerator:Create(p_EntityGuid, p_Site)
     s_EntityData.showRadius = 0.0
     s_EntityData.hideRadius = 0.0
     s_EntityData.blinkTime = 5.0
-    s_EntityData.markerType = MapMarkerType.MMTMissionObjective
     s_EntityData.visibleForTeam = TeamId.TeamNeutral
     s_EntityData.ownerTeam = TeamId.TeamNeutral
-    s_EntityData.hudIcon = UIHudIcon.UIHudIcon_ObjectiveGeneral
+
+    if p_Site == "A" then
+        s_EntityData.markerType = MapMarkerType.MMTSoldier
+        s_EntityData.hudIcon = UIHudIcon.UIHudIcon_FriendlyPlayer
+    else
+        s_EntityData.markerType = MapMarkerType.MMTSoldier
+        s_EntityData.hudIcon = UIHudIcon.UIHudIcon_FriendlyPlayer
+    end
+
     s_EntityData.verticalOffset = 0.0
-    s_EntityData.focusPointRadius = 80.0
+    s_EntityData.focusPointRadius = 200.0
     s_EntityData.instantFlagReturnRadius = 0.0
     s_EntityData.progress = 0.0
     s_EntityData.progressPlayerSpeedUpPercentage = 10.0
@@ -28,9 +35,9 @@ function MapMarkerEntityDataGenerator:Create(p_EntityGuid, p_Site)
     s_EntityData.showProgress = false
     s_EntityData.useMarkerTransform = false
     s_EntityData.isVisible = true
-    s_EntityData.snap = true
+    s_EntityData.snap = false
     s_EntityData.showAirTargetBox = true
-    s_EntityData.isFocusPoint = true
+    s_EntityData.isFocusPoint = false
     s_EntityData.enabled = true
     s_EntityData.transform = LinearTransform(
         Vec3(1, 0, 0),

@@ -2,7 +2,7 @@ class "kPMShared"
 
 require("__shared/MapsConfig")
 require("__shared/LevelNameHelper")
-require("__shared/MapMarkerEntityDataGenerator")
+require("__shared/Generators/MapMarkerEntityDataGenerator")
 
 function kPMShared:__init()
     print("shared initialization")

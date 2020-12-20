@@ -44,6 +44,10 @@ const App: React.FC = () => {
         if (p_GameState !== GameStates.None && showHud !== true) {
             setShowHud(true)
         }
+
+        // Reset plant progress
+        setPlantProgress(0);
+        setPlantOrDefuse("plant");
     }
 
     const [gameType, setGameType] = useState<GameTypes>(GameTypes.Comp);
