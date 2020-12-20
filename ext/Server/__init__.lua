@@ -41,6 +41,8 @@ function kPMServer:__init()
 
     -- Callbacks
     self.m_MatchStateCallbacks = { }
+
+    ServerUtils:SetCustomGameModeName("Promod")
 end
 
 function kPMServer:RegisterEvents()
