@@ -16,11 +16,11 @@ const WarmupScene: React.FC<Props> = ({ rupProgress, clientPlayer }) => {
 
                 <div id="tutorial">
                     <div className="keyHolder keyF9">
-                        <span>T</span>
+                        <span>F9</span>
                         <h3>Teams</h3>
                     </div>
                     <div className="keyHolder keyF10">
-                        <span>I</span>
+                        <span>F10</span>
                         <h3>Loadouts</h3>
                     </div>
                 </div>
