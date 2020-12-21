@@ -1,7 +1,7 @@
 class "kPMClient"
 
 require("ClientCommands")
-require("Freecam")
+require("SpecCam")
 require("UICleanup")
 require("StratVision")
 require("__shared/GameStates")
@@ -61,7 +61,7 @@ function kPMClient:__init()
     self.m_PlantSent = false
 
     -- Freecamera
-    self.m_FreeCam = FreeCam()
+    self.m_SpecCam = SpecCam()
 
     -- Start vision (black and white)
     self.m_StatVision = StratVision()
@@ -170,6 +170,15 @@ function kPMClient:OnSetSelectedTeam(p_Team)
         return
     end
 
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+    if s_LocalPlayer == nil then
+        return
+    end
+
+    if not s_LocalPlayer.alive and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
+        self.m_SpecCam:Enable()
+    end
+
     if p_Team == 3 then -- auto-join
         local s_Attackers = PlayerManager:GetPlayersByTeam(self.m_AttackersTeamId)
         local s_Defenders = PlayerManager:GetPlayersByTeam(self.m_DefendersTeamId)
@@ -229,8 +238,8 @@ end
 
 function kPMClient:OnLevelDestroyed()
     -- Handle cleanup when level is destroyed
-    if self.m_FreeCam ~= nil then
-        self.m_FreeCam:OnLevelDestroy()
+    if self.m_SpecCam ~= nil then
+        self.m_SpecCam:OnLevelDestroy()
     end
 end
 
@@ -249,8 +258,8 @@ end
 
 function kPMClient:OnUpdateInput(p_DeltaTime)
     -- Update the freecam
-    if self.m_FreeCam ~= nil then
-        self.m_FreeCam:OnUpdateInput(p_DeltaTime)
+    if self.m_SpecCam ~= nil then
+        self.m_SpecCam:OnUpdateInput(p_DeltaTime)
     end
 
     -- TODO: Remove me
@@ -319,8 +328,8 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
     end
 
     -- Update the freecam
-    if self.m_FreeCam ~= nil then
-        self.m_FreeCam:OnUpdateInputHook(p_Hook, p_Cache, p_DeltaTime)
+    if self.m_SpecCam ~= nil then
+        self.m_SpecCam:OnUpdateInputHook(p_Hook, p_Cache, p_DeltaTime)
     end
 end
 
@@ -817,6 +826,7 @@ function kPMClient:OnPlayerRespawn(p_Player)
         return
     end
 
+    self.m_SpecCam:Disable()
 end
 
 function kPMClient:OnPlayerKilled(p_Player)
@@ -824,10 +834,14 @@ function kPMClient:OnPlayerKilled(p_Player)
     if p_Player == nil then
         return
     end
-    
-    print('OnPlayerKilled')
 
     self:EnablePlayerInputs()
+
+    if self.m_GameState == GameStates.FirstHalf or
+        self.m_GameState == GameStates.SecondHalf
+    then
+        self.m_SpecCam:Enable()
+    end
 end
 
 function kPMClient:OnPlayerDeleted(p_Player)

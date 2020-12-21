@@ -211,6 +211,8 @@ function kPMServer:OnPlayerConnected(p_Player)
         return
     end
 
+    self.m_Match:ForceUpdateHeader(p_Player)
+
     -- Send out gamestate information if he connects or reconnects
     NetEvents:SendTo("kPM:GameStateChanged", p_Player, GameStates.None, self.m_GameState)
 
@@ -227,15 +229,54 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
         return
     end
     
-    if kPMConfig.GameType == GameTypes.Public or
-    self.m_GameState == GameStates.None or 
-    self.m_GameState == GameStates.Warmup or 
-    self.m_GameState == GameStates.NadeTraining or 
-    p_Player.teamId == TeamId.TeamNeutral then
-        print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
-        p_Player.teamId = p_Team;
-    else
-        print("info: player " .. p_Player.name .. " can't change team during the match")
+    local l_SoldierBlueprint = ResourceManager:SearchForDataContainer('Characters/Soldiers/MpSoldier')
+
+    if kPMConfig.GameType == GameTypes.Public then
+        if self.m_GameState == GameStates.Strat or
+            self.m_GameState == GameStates.None or 
+            self.m_GameState == GameStates.Warmup
+        then
+            print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+            p_Player.teamId = p_Team;
+
+            if p_Player.soldier ~= nil then
+                self.m_Match:KillPlayer(p_Player, false)
+
+                self.m_Match:AddPlayerToSpawnQueue(
+                    p_Player, 
+                    self.m_Match:GetRandomSpawnpoint(p_Player), 
+                    CharacterPoseType.CharacterPoseType_Stand, 
+                    l_SoldierBlueprint, 
+                    false,
+                    self.m_LoadoutManager:GetPlayerLoadout(p_Player)
+                )
+            end
+        else
+            if p_Player.soldier == nil or not p_Player.alive then
+                print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+                p_Player.teamId = p_Team;
+            end
+        end
+    elseif kPMConfig.GameType == GameTypes.Comp then
+        if self.m_GameState == GameStates.None or 
+            self.m_GameState == GameStates.Warmup
+        then
+            print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+            p_Player.teamId = p_Team;
+
+            if p_Player.soldier ~= nil then
+                self.m_Match:KillPlayer(p_Player, false)
+
+                self.m_Match:AddPlayerToSpawnQueue(
+                    p_Player, 
+                    self.m_Match:GetRandomSpawnpoint(p_Player), 
+                    CharacterPoseType.CharacterPoseType_Stand, 
+                    l_SoldierBlueprint, 
+                    false,
+                    self.m_LoadoutManager:GetPlayerLoadout(p_Player)
+                )
+            end
+        end
     end
 end
 

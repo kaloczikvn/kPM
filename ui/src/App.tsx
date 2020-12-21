@@ -21,6 +21,7 @@ import PlantOrDefuseProgress from "./components/PlantOrDefuseProgress";
 
 import './Animations.scss';
 import './Global.scss';
+import Spectator from "./components/Spectator";
 
 const App: React.FC = () => {
     /*
@@ -276,6 +277,18 @@ const App: React.FC = () => {
         setPlantOrDefuse("plant");
     }
 
+    const [spectating, setSpectating] = useState<boolean>(false);
+    window.SpectatorEnabled = function(p_Enabled: boolean) {
+        console.log('SpectatorEnabled ' + p_Enabled);
+        setSpectating(p_Enabled);
+    }
+
+    const [spectatorTarget, setSpectatorTarget] = useState<string>("");
+    window.SpectatorTarget = function(p_TargetName: string) {
+        console.log('SpectatorTarget ' + p_TargetName);
+        setSpectatorTarget(p_TargetName);
+    }
+
     const GameStatesPage = () => {
         switch (scene) {
             default:
@@ -372,6 +385,10 @@ const App: React.FC = () => {
                     plantProgress={plantProgress}
                     plantOrDefuse={plantOrDefuse}
                 />
+                <Spectator
+                    spectating={spectating}
+                    spectatorTarget={spectatorTarget}
+                />
                 
                 {bombPlanted !== null &&
                     <BombPlantInfoBox bombSite={bombPlanted} afterInterval={() => setBombPlanted(null)} />
@@ -424,5 +441,9 @@ declare global {
         PlantInteractProgress: (m_PlantOrDefuseHeldTime: number, PlantTime: number, plantOrDefuse: string) => void
         ResetUI: () => void;
         RoundCount: (p_Count: number) => void;
+
+        //Spectator
+        SpectatorTarget: (p_TargetName: string) => void;
+        SpectatorEnabled: (p_Enabled: boolean) => void;
     }
 }

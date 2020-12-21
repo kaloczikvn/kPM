@@ -750,6 +750,14 @@ function Match:OnStrat(p_DeltaTime)
     self.m_UpdateTicks[GameStates.Strat] = self.m_UpdateTicks[GameStates.Strat] + p_DeltaTime
 end
 
+function Match:ForceUpdateHeader(p_Player)
+    if p_Player == nil then
+        return
+    end
+
+    NetEvents:SendTo("kPM:UpdateHeader", p_Player, self.m_Attackers:CountRoundWon(), self.m_Defenders:CountRoundWon(), self.m_CurrentRound)
+end
+
 function Match:DisablePlayerInputs()
     --[[local s_Players = PlayerManager:GetPlayers()
     for l_Index, l_Player in ipairs(s_Players) do
