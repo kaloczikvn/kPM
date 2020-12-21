@@ -1,3 +1,5 @@
+require ("__shared/kPMConfig")
+
 ClientCommands = 
 {
     errInvalidCommand = "Invalid Command",
@@ -56,7 +58,7 @@ ClientCommands =
             return ClientCommands.errInvalidCommand
         end
 
-        if localPlayer.name ~= "KVN" then
+        if localPlayer.name ~= kPMConfig.AdminName then
             return ClientCommands.errInvalidCommand
         end
 

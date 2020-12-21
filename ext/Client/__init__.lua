@@ -29,6 +29,7 @@ function kPMClient:__init()
 
     -- Ready-Up Inputs
     self.m_RupHeldTime = 0.0
+    self.m_RupHeldReady = false
 
     -- Plant Inputs
     self.m_PlantOrDefuseHeldTime = 0.0
@@ -58,7 +59,6 @@ function kPMClient:__init()
 
     self.m_PlantSoundEntityData = nil
     self.m_PlantSent = false
-    self.m_DefuseSoundEntityData = nil
 
     -- Freecamera
     self.m_FreeCam = FreeCam()
@@ -245,7 +245,6 @@ function kPMClient:OnLevelLoadResources()
     self.m_ExplosionEntityData = nil
 
     self.m_PlantSoundEntityData = nil
-    self.m_DefuseSoundEntityData = nil
 end
 
 function kPMClient:OnUpdateInput(p_DeltaTime)
@@ -260,7 +259,7 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     end]]
 
     -- Open Team menu
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_T) then
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
         -- If the player never spawned we should force him to pick a team and a loadout first
         if self.m_FirstSpawn then
             WebUI:ExecuteJS("OpenCloseTeamMenu();")
@@ -268,7 +267,7 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     end
 
     -- Open Loadout menu
-    if InputManager:WentKeyDown(InputDeviceKeys.IDK_I) then
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_F10) then
         -- If the player never spawned we should force him to pick a team and a loadout first
         if self.m_FirstSpawn then
             WebUI:ExecuteJS("OpenCloseLoadoutMenu();")
@@ -300,29 +299,22 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
             self.m_RupHeldTime = self.m_RupHeldTime + p_DeltaTime
             p_Cache:SetLevel(InputConceptIdentifiers.ConceptInteract, 0.0)
         else
+            if self.m_RupHeldReady then
+                self.m_RupHeldReady = false
+            end
             -- If the client isn't holding interact reset our time
             self.m_RupHeldTime = 0.0
         end
 
-        WebUI:ExecuteJS("RupInteractProgress(" .. tostring(self.m_RupHeldTime) ..", " .. tostring(kPMConfig.MaxReadyUpTime) .. ");")
-
         -- Toggle the rup state
         if self.m_RupHeldTime >= kPMConfig.MaxReadyUpTime then
-            if s_Player == nil then
-                print("err: could not get local player.")
-                return
+            if not self.m_RupHeldReady then
+                NetEvents:Send("kPM:ToggleRup")
+                WebUI:ExecuteJS("RupInteractProgress(" .. tostring(0) ..", " .. tostring(kPMConfig.MaxReadyUpTime) .. ");")
+                self.m_RupHeldReady = true
             end
-
-            -- Get the local player id
-            local s_PlayerId = s_Player.id
-
-            -- Send the toggle event to the server
-            NetEvents:Send("kPM:ToggleRup")
-
-            print("rup status changed")
-
-            -- Reset our rup timer
-            self.m_RupHeldTime = 0.0
+        else
+            WebUI:ExecuteJS("RupInteractProgress(" .. tostring(self.m_RupHeldTime) ..", " .. tostring(kPMConfig.MaxReadyUpTime) .. ");")
         end
     end
 
@@ -354,8 +346,10 @@ function kPMClient:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
         l_ScoreboardActive = false
     end
 
-    if self.m_TabHeldTime >= 2.0 then
-        self:OnUpdateScoreboard(l_Player)
+    if self.m_TabHeldTime >= 3.0 then
+        if l_ScoreboardActive == true then
+            self:OnUpdateScoreboard(l_Player)
+        end
 
         -- Reset our timer
         self.m_TabHeldTime = 0.0
@@ -453,7 +447,7 @@ function kPMClient:OnEngineUpdate(p_DeltaTime, p_SimulationDeltaTime)
 end
 
 function kPMClient:OnRupStateChanged(p_WaitingOnPlayers, p_LocalRupStatus)
-    if p_WaitingOnPlayers == nil then
+    --[[if p_WaitingOnPlayers == nil then
         print("err: invalid waiting on player count.")
         return
     end
@@ -461,10 +455,12 @@ function kPMClient:OnRupStateChanged(p_WaitingOnPlayers, p_LocalRupStatus)
     if p_LocalRupStatus == nil then
         print("err: invalid local rup status.")
         return
-    end
+    end]]
 
     local l_Player = PlayerManager:GetLocalPlayer()
-    self:OnUpdateScoreboard(l_Player)
+    if l_Player ~= nil then
+        self:OnUpdateScoreboard(l_Player)
+    end
 end
 
 function kPMClient:OnPlayerPing(p_PingTable)
@@ -904,16 +900,18 @@ end
 function kPMClient:DisablePlayerInputs()
     if self.m_PlayerInputs then
         local s_Player = PlayerManager:GetLocalPlayer()
-        s_Player:EnableInput(EntryInputActionEnum.EIAFire, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAJump, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAThrowGrenade, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAThrottle, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAStrafe, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAChangePose, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIAProne, false)
-        s_Player:EnableInput(EntryInputActionEnum.EIASprint, false)
-        self.m_PlayerInputs = false
+        if s_Player ~= nil then
+            s_Player:EnableInput(EntryInputActionEnum.EIAFire, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAJump, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAThrowGrenade, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAThrottle, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAStrafe, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAChangePose, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIAProne, false)
+            s_Player:EnableInput(EntryInputActionEnum.EIASprint, false)
+            self.m_PlayerInputs = false
+        end
     end
 end
 
@@ -924,16 +922,18 @@ end
 function kPMClient:EnablePlayerInputs()
     if not self.m_PlayerInputs then
         local s_Player = PlayerManager:GetLocalPlayer()
-        s_Player:EnableInput(EntryInputActionEnum.EIAFire, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAJump, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAThrowGrenade, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAThrottle, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAStrafe, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAChangePose, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIAProne, true)
-        s_Player:EnableInput(EntryInputActionEnum.EIASprint, true)
-        self.m_PlayerInputs = true
+        if s_Player ~= nil then
+            s_Player:EnableInput(EntryInputActionEnum.EIAFire, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAJump, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAThrowGrenade, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAThrottle, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAStrafe, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAMeleeAttack, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAChangePose, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIAProne, true)
+            s_Player:EnableInput(EntryInputActionEnum.EIASprint, true)
+            self.m_PlayerInputs = true
+        end
     end
 end
 

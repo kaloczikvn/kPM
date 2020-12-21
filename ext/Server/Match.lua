@@ -898,12 +898,14 @@ function Match:IsAllPlayersRup()
     -- Get all players in the server
     local s_Players = PlayerManager:GetPlayers()
 
+    local s_Rup_Player_Count = 0
+
     -- Iterate over all players and check the rup state
     for l_Index, l_Player in ipairs(s_Players) do
         -- Check that the player is valid
         if l_Player == nil then
             print("err: invalid player in player manager.")
-            return false
+            goto _rup_continue_
         end
 
         -- Get the player id
@@ -911,17 +913,33 @@ function Match:IsAllPlayersRup()
 
         -- Check to see if this player has *any* rup state
         if self.m_ReadyUpPlayers[l_PlayerId] == nil then
-            return false
+            goto _rup_continue_
         end
 
         -- Is this player not readied up
         if self.m_ReadyUpPlayers[l_PlayerId] == false then
+            goto _rup_continue_
+        end
+
+        s_Rup_Player_Count = s_Rup_Player_Count + 1
+
+        ::_rup_continue_::
+    end
+
+
+    if self.m_GameType == GameTypes.Public then
+        if s_Rup_Player_Count >= (s_TotalPlayerCount / 2) then
+            return true
+        else
+            return false
+        end
+    else
+        if s_Rup_Player_Count >= s_TotalPlayerCount then
+            return true
+        else
             return false
         end
     end
-
-    -- All conditions passed, all players are readied up
-    return true
 end
 
 function Match:IsPlayerRup(p_PlayerId)

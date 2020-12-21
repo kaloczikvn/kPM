@@ -5,7 +5,12 @@ kPMConfig =
     -- ==========
     -- Debug mode options
     -- ==========
-    DebugMode = true,
+    DebugMode = false,
+
+    -- ==========
+    -- Server configuration options
+    -- ==========
+    AdminName = "KVN",
 
     -- ==========
     -- Client configuration options
@@ -34,7 +39,7 @@ kPMConfig =
     MatchDefaultRounds = 15,
 
     -- Minimum of 2 players in order to start a match
-    MinPlayerCount = 1,
+    MinPlayerCount = 2,
 
     -- Minimum clan tag length
     MinClanTagLength = 1,
