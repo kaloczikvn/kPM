@@ -131,10 +131,7 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
     }
 
     const doneLoadout = () => {
-        console.log(currentLoadout);
-
         if (navigator.userAgent.includes('VeniceUnleashed')) {
-            console.log('DispatchEventLocal . WebUISetSelectedLoadout . ' + JSON.stringify(currentLoadout));
             WebUI.Call('DispatchEventLocal', 'WebUISetSelectedLoadout', JSON.stringify(currentLoadout));
             WebUI.Call('ResetKeyboard');
             WebUI.Call('ResetMouse');
@@ -272,6 +269,7 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
                             </>
                         }
                     </div>
+                    <Title text="F10 - To close Loadouts window" bottom={true} />
                 </div>
             }
         </>

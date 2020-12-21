@@ -4,6 +4,18 @@
     top: 4vh;
     text-transform: uppercase;
 
+    &.bottom {
+        bottom: 6vh;
+        top: auto;
+
+        h1 {
+            border-bottom: 0;
+            margin-top: 1.851851851851852vh;
+            margin-bottom: 0;
+            width: auto;
+        }
+    }
+
     h1 {
         border-bottom: 0.15741vh solid rgba(255,255,255,0.2);
         text-transform: uppercase;

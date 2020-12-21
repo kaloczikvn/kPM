@@ -17,7 +17,6 @@ const TeamsScene: React.FC<Props> = ({ show, setSelectedTeam, gameType }) => {
         setSelectedTeam(team);
 
         if (navigator.userAgent.includes('VeniceUnleashed')) {
-            console.log('DispatchEventLocal . WebUISetSelectedTeam . ' + team);
             WebUI.Call('DispatchEventLocal', 'WebUISetSelectedTeam', team);
         }
     }
@@ -36,6 +35,7 @@ const TeamsScene: React.FC<Props> = ({ show, setSelectedTeam, gameType }) => {
                         <hr/>
                         <button className={"btn border-btn disabled"}>Spectator</button>
                     </div>
+                    <Title text="F9 - To close Teams window" bottom={true} />
                 </div>
             }
         </>

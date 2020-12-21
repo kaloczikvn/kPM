@@ -1,10 +1,10 @@
 #inGameScoreboard {
     position: absolute;
-    top: calc(50vh - 40vh);
+    top: calc(50vh - 42.5vh);
     left: calc(50vw - 32.5vw);
     z-index: 999;
     width: 65vw;
-    height: 80vh;
+    height: 85vh;
     display: grid;
     grid-template-rows: 47% 6% 47%;
     grid-gap: 0;
@@ -17,6 +17,87 @@
         display: flex;
         align-items: center;
         justify-content: center;
+
+        .roundList {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: calc(100% - 1vh);
+            width:  50%;
+            background: rgba(0, 0, 0, 0.3);
+            padding: .5vh 1vh;
+
+            .roundInfo {
+                position: relative;
+                display: flex;
+                flex: 1 1 auto;
+                height: 100%;
+
+                span {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: .8vw;
+                }
+
+                &.halfTime {
+                    max-width: 0.05vw;
+
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        width: 100%;
+                        height: 100%;
+                        top: 0;
+                        left: 0;
+                        background: #fff;
+                    }
+                }
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    width: 70%;
+                    height: 0.2vh;
+                    top: calc(50% - 0.1vh);
+                    left: 15%;
+                    background: #fff;
+                }
+
+                &.attackers::before {
+                    content: '';
+                    position: absolute;
+                    width: 70%;
+                    height: 45%;
+                    top: 0;
+                    left: 15%;
+                    background: var(--primary);
+                    border-top-right-radius: 0.3vw;
+                    border-top-left-radius: 0.3vw;
+                }
+
+                &.attackers::after {
+                    background: var(--primary);
+                }
+
+                &.defenders::after {
+                    background: var(--secondary);
+                }
+
+                &.defenders::before {
+                    content: '';
+                    position: absolute;
+                    width: 70%;
+                    height: 45%;
+                    bottom: 0;
+                    left: 15%;
+                    background: var(--secondary);
+                    border-bottom-right-radius: 0.3vw;
+                    border-bottom-left-radius: 0.3vw;
+                }
+            }
+        }
     }
 
     div.team {
@@ -38,6 +119,14 @@
                 font-size: 1.5vw;
                 line-height: 1;
                 text-transform: uppercase;
+
+                &.teamName {
+                    .alive {
+                        font-size: .9vw;
+                        margin-left: 1vw;
+                        opacity: .7;
+                    }
+                }
                 
                 &.point {
                     font-weight: 600;

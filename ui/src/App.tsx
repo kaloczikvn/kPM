@@ -22,6 +22,7 @@ import PlantOrDefuseProgress from "./components/PlantOrDefuseProgress";
 import './Animations.scss';
 import './Global.scss';
 import Spectator from "./components/Spectator";
+import { RoundInfo } from "./helpers/RoundInfo";
 
 const App: React.FC = () => {
     /*
@@ -62,6 +63,15 @@ const App: React.FC = () => {
     */
     const [showHud, setShowHud] = useState<boolean>(false);
 
+    const [roundsList, setRoundsList] = useState<RoundInfo[]>([
+        {
+            winner: Teams.Attackers,
+        },
+        {
+            winner: Teams.Defenders,
+        },
+    ]);
+    
     const [round, setRound] = useState<number>(0);
     const [roundWon, setRoundWon] = useState<boolean>(false);
     const [winningTeam, setWinningTeam] = useState<Teams>(Teams.Attackers);
@@ -81,7 +91,7 @@ const App: React.FC = () => {
         }
     }
 
-    const [maxRounds, setMaxRounds] = useState<number>(15);
+    const [maxRounds, setMaxRounds] = useState<number>(12);
     
     window.RoundCount = function (p_Count: number) {
         setMaxRounds(p_Count);
@@ -212,7 +222,7 @@ const App: React.FC = () => {
 
     const SetDummyPlayers = () => {
         var dummyPlayers:Player[] = []
-        for (let index = 0; index < 4; index++) {
+        for (let index = 0; index < 10; index++) {
             dummyPlayers.push({
                 id: 0,
                 name: 'Teszt',
@@ -223,7 +233,6 @@ const App: React.FC = () => {
                 isReady: (Math.random() < 0.5),
                 team: Teams.None,
             });
-            
         }
 
         setPlayers({
@@ -323,6 +332,7 @@ const App: React.FC = () => {
 
                     #debug {
                         display: block !important;
+                        opacity: 0.1;
                     }
                 `}} />
             }
@@ -360,6 +370,7 @@ const App: React.FC = () => {
                     gameType={gameType}
                     bombPlantedOn={bombPlantedOn}
                     maxRounds={maxRounds}
+                    players={players}
                 />
                 <GameStatesPage />
                 <TeamsScene
@@ -380,6 +391,7 @@ const App: React.FC = () => {
                     gameState={scene}
                     round={round}
                     maxRounds={maxRounds}
+                    roundsList={roundsList}
                 />
                 <PlantOrDefuseProgress 
                     plantProgress={plantProgress}

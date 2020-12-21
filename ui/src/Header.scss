@@ -32,12 +32,12 @@
 #inGameHeader {
     position: absolute;
     top: 0;
-    left: calc(50vw - 17.5vw);
+    left: calc(50vw - 25vw);
     z-index: 999;
-    width: 35vw;
+    width: 50vw;
     height: 7vh;
     display: grid;
-    grid-template-columns: .5fr 1fr .5fr;
+    grid-template-columns: 1fr .95fr 1fr;
 
     #teamDefenders,
     #teamAttackers {
@@ -47,6 +47,45 @@
         font-size: 1.15vw;
         font-weight: 600;
         background: rgba(0, 0, 0, 0.65);
+    }
+
+    .playerIcons {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        
+        &.attackers {
+            direction: rtl;
+        }
+
+        &.defenders {
+            direction: ltr;
+        }
+
+        .playerIcon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &.isAttacker {
+                background: var(--primary);
+            }
+
+            &.isDefender {
+                background: var(--secondary);
+            }
+
+            &.isDead {
+                background: rgba(0, 0, 0, 0.6);
+            }
+
+            img {
+                display: flex;
+                width: auto;
+                height: auto;
+                object-fit: cover;
+                max-width: 1vw;
+            }
+        }
     }
 
     #score {
@@ -70,6 +109,15 @@
             span.points {
                 line-height: 1;
                 font-weight: 600;
+            }
+
+            span.alive {
+                color: #000;
+                font-size: .7vw;
+                position: absolute;
+                height: 1vh;
+                bottom: -1vh;
+                background: #fff;
             }
 
             &#scoreAttackers {
@@ -138,7 +186,7 @@
                     bottom: -2vh;
                     left: 0;
                     width: 100%;
-                    font-size: 1.55vh;
+                    font-size: 0.8vw;
                     background: #fff;
                     color: #000;
                     text-transform: uppercase;

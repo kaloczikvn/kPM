@@ -12,11 +12,24 @@ interface Props {
 }
 
 const ScoreboardTeam: React.FC<Props> = ({ team, score, players, gameState }) => {
+
+    const getAlivePlayersCount = () => {
+        if (players !== undefined && players.length > 0) {
+            var alive = Object.values(players).filter(item => item.isDead === false);
+            return alive.length;
+        } else {
+            return 0;
+        }
+    }
+
     return (
         <>
             <div className={"team " + ((team === Teams.Attackers) ? 'attackers' : 'defenders') + ' gameState' + gameState.toString()} >
                 <div className="headerBar">
-                    <div className="teamName">{(team === Teams.Attackers) ? 'Attackers' : 'Defenders'}</div>
+                    <div className="teamName">
+                        {(team === Teams.Attackers) ? 'Attackers' : 'Defenders'}
+                        <span className="alive">{getAlivePlayersCount()} alive</span>
+                    </div>
                     <div className="point">{score??0}</div>
                 </div>
                 <div className="playersHolderHeader">

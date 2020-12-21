@@ -123,6 +123,7 @@ function kPMClient:RegisterEvents()
     -- Player Events
     self.m_PlayerRespawnEvent = Events:Subscribe("Player:Respawn", self, self.OnPlayerRespawn)
     self.m_PlayerKilledEvent = Events:Subscribe("Player:Killed", self, self.OnPlayerKilled)
+    self.m_SoldierHealthActionEvent = Events:Subscribe("Soldier:HealthAction", self, self.OnSoldierHealthAction)
     self.m_PlayerDeletedEvent = Events:Subscribe("Player:Deleted", self, self.OnPlayerDeleted)
 
     -- Level events
@@ -177,6 +178,7 @@ function kPMClient:OnSetSelectedTeam(p_Team)
 
     if not s_LocalPlayer.alive and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
         self.m_SpecCam:Enable()
+        self.m_SpecCam:GetRandomSpecWhenTeamSwitch()
     end
 
     if p_Team == 3 then -- auto-join
@@ -465,11 +467,6 @@ function kPMClient:OnRupStateChanged(p_WaitingOnPlayers, p_LocalRupStatus)
         print("err: invalid local rup status.")
         return
     end]]
-
-    local l_Player = PlayerManager:GetLocalPlayer()
-    if l_Player ~= nil then
-        self:OnUpdateScoreboard(l_Player)
-    end
 end
 
 function kPMClient:OnPlayerPing(p_PingTable)
@@ -826,7 +823,19 @@ function kPMClient:OnPlayerRespawn(p_Player)
         return
     end
 
-    self.m_SpecCam:Disable()
+    local s_Player = PlayerManager:GetLocalPlayer()
+    -- Validate local player
+    if s_Player == nil then
+        return
+    end
+
+    self:OnUpdateScoreboard(s_Player)
+
+    if p_Player.id == s_Player.id then
+        self.m_SpecCam:Disable()
+
+        WebUI:ExecuteJS('SpectatorEnabled('.. tostring(false) .. ');')
+    end
 end
 
 function kPMClient:OnPlayerKilled(p_Player)
@@ -835,12 +844,35 @@ function kPMClient:OnPlayerKilled(p_Player)
         return
     end
 
-    self:EnablePlayerInputs()
+    local s_Player = PlayerManager:GetLocalPlayer()
+    -- Validate local player
+    if s_Player == nil then
+        return
+    end
 
-    if self.m_GameState == GameStates.FirstHalf or
-        self.m_GameState == GameStates.SecondHalf
+    if p_Player.id == s_Player.id then
+        self:EnablePlayerInputs()
+
+        if self.m_GameState == GameStates.FirstHalf or
+            self.m_GameState == GameStates.SecondHalf
+        then
+            self.m_SpecCam:Enable()
+        end
+    end
+end
+
+function kPMClient:OnSoldierHealthAction(p_Soldier, p_Action)
+    local s_Player = PlayerManager:GetLocalPlayer()
+    -- Validate local player
+    if s_Player == nil then
+        return
+    end
+
+    if p_Action == HealthStateAction.OnKilled or
+        p_Action == HealthStateAction.OnDead or
+        p_Action == HealthStateAction.OnDeathAnimationDone
     then
-        self.m_SpecCam:Enable()
+        self:OnUpdateScoreboard(s_Player)
     end
 end
 

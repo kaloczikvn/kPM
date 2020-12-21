@@ -17,7 +17,8 @@ end
 function SpecCam:RegisterVars()
 	self.m_SpecCam = false
 	self.m_Mode = CameraMode.FirstPerson
-	self.m_TargetPlayer = nil
+	self.m_TargetPlayerId = nil
+	self.m_TargetIndex = 0
 
 	self.m_Camera = nil
 	self.m_CameraData = CameraEntityData()
@@ -83,7 +84,7 @@ function SpecCam:SetCameraTarget(p_Player)
 	WebUI:ExecuteJS('SpectatorEnabled('.. tostring(true) .. ');')
 	WebUI:ExecuteJS('SpectatorTarget("'.. tostring(p_Player.name) .. '");')
 
-	self.m_TargetPlayer = p_Player
+	self.m_TargetPlayerId = p_Player.id
 	return true
 end
 
@@ -135,12 +136,75 @@ function SpecCam:GetRandomCameraTarget()
 	return s_Target
 end
 
+function SpecCam:GetNextCameraTarget()
+	local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+
+	if s_LocalPlayer == nil then
+		return
+	end
+
+	local s_PlayersList = PlayerManager:GetPlayersByTeam(s_LocalPlayer.teamId)
+
+	local s_Target = nil
+	if #s_PlayersList > 1 then
+		
+		local s_AliveCount = 0
+		for l_Index, l_Player in pairs(s_PlayersList) do
+			if l_Player ~= nil and
+				l_Player.alive and
+				l_Player.soldier ~= nil and
+				l_Player.id ~= s_LocalPlayer.id
+			then
+				s_AliveCount = s_AliveCount + 1
+			end
+		end
+
+		if s_AliveCount > 0 then
+
+			while(s_Target == nil)
+			do
+				local l_Found = false
+				for l_Index, l_Player in pairs(s_PlayersList) do
+					if not l_Found and
+						l_Index > self.m_TargetIndex and
+						l_Player ~= nil and
+						l_Player.alive and
+						l_Player.soldier ~= nil and
+						l_Player.id ~= s_LocalPlayer.id
+					then
+						l_Found = true
+						self.m_TargetIndex = l_Index
+						s_Target = l_Player
+					end
+				end
+
+				if not l_Found then
+					self.m_TargetIndex = 0
+				end
+			end
+		else
+			s_Target = s_LocalPlayer
+		end
+	end
+
+	if s_Target == nil then
+		s_Target = s_LocalPlayer
+	end
+  
+	return s_Target
+end
+
 function SpecCam:GetCameraTarget()
-	return self.m_TargetPlayer
+	return self.m_TargetPlayerId
 end
 
 function SpecCam:OnUpdateInputHook(p_Hook, p_Cache, p_DeltaTime)
-	if self.m_TargetPlayer ~= nil and self.m_TargetPlayer.alive == false then
+	local s_TargetPlayer = nil
+	if self.m_TargetPlayerId ~= nil then
+		s_TargetPlayer = PlayerManager:GetPlayerById(self.m_TargetPlayerId)
+	end
+
+	if s_TargetPlayer ~= nil and s_TargetPlayer.alive == false then
 		local s_Target = self:GetRandomCameraTarget()
 		if s_Target ~= nil then
 			self:SetCameraTarget(s_Target)
@@ -164,7 +228,7 @@ function SpecCam:Create()
 	s_Entity:Init(Realm.Realm_Client, true);
 
 	self.m_CameraData.transform = ClientUtils:GetCameraTransform()
-	self.m_CameraData.fov = 30
+	self.m_CameraData.fov = 60
 	self.m_Camera = s_Entity
 end
 
@@ -189,10 +253,10 @@ function SpecCam:Enable()
 	if s_Target ~= nil then
 		self:SetCameraTarget(s_Target)
 		self:SetCameraMode(CameraMode.FirstPerson)
-		self:TakeControl()
+		--self:TakeControl()
 		SpectatorManager:SetSpectating(true)
 		self.m_SpecCam = true
-		WebUI:ExecuteJS('SpectatorEnabled('.. tostring(self.m_SpecCam) .. ');')
+		WebUI:ExecuteJS('SpectatorEnabled('.. tostring(true) .. ');')
 	end
 end
 
@@ -201,15 +265,24 @@ function SpecCam:Disable()
 		local s_LocalPlayer = PlayerManager:GetLocalPlayer()
 		self:SetCameraTarget(s_LocalPlayer)
 		self:SetCameraMode(SpectatorCameraMode.Disabled)
-		self:ReleaseControl()
+		--self:ReleaseControl()
 		SpectatorManager:SetSpectating(false)
 		self.m_SpecCam = false
-		WebUI:ExecuteJS('SpectatorEnabled('.. tostring(self.m_SpecCam) .. ');')
+		WebUI:ExecuteJS('SpectatorEnabled('.. tostring(false) .. ');')
 	end
 end
 
 function SpecCam:OnUpdateInput(p_Delta)
 	if InputManager:WentKeyDown(InputDeviceKeys.IDK_Space) and self.m_SpecCam then
+		local s_Target = self:GetNextCameraTarget()
+		if s_Target ~= nil then
+			self:SetCameraTarget(s_Target)
+		end
+	end
+end
+
+function SpecCam:GetRandomSpecWhenTeamSwitch()
+	if self.m_SpecCam then
 		local s_Target = self:GetRandomCameraTarget()
 		if s_Target ~= nil then
 			self:SetCameraTarget(s_Target)

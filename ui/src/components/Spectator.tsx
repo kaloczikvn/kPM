@@ -1,5 +1,7 @@
 import React from "react";
 
+import './Spectator.scss';
+
 interface Props {
     spectating: boolean;
     spectatorTarget: string;
@@ -9,10 +11,10 @@ const Spectator: React.FC<Props> = ({ spectating, spectatorTarget }) => {
     return (
         <>
             {(spectating === true) &&
-                <div id="pageInGame" className="page">
+                <div id="pageSpectator" className="page">
                     <div className={"infoBox notReady"}>
                         <h1>{spectatorTarget??''}</h1>
-                        <h3>Spectating</h3>
+                        <h3>Spectating - Press SPACE to select the next teammate</h3>
                     </div>
                 </div>
             }

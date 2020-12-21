@@ -3,6 +3,13 @@ import { GameStates, GameStatesRoundString } from "./helpers/GameStates";
 import { GameTypes, GameTypesString } from './helpers/GameTypes';
 import { useTimer } from "react-compound-timer/build/hook/useTimer";
 
+import {  Player, Players } from "./helpers/Player";
+import { Teams } from "./helpers/Teams";
+
+
+import skull from './assets/img/human-skull.svg';
+import like from './assets/img/helmet.svg';
+
 import './Header.scss';
 
 interface Props {
@@ -16,6 +23,7 @@ interface Props {
     gameType: GameTypes;
     bombPlantedOn: string|null;
     maxRounds: number;
+    players?: Players;
 }
 
 const Header: React.FC<Props> = ({ 
@@ -28,7 +36,8 @@ const Header: React.FC<Props> = ({
     showHud,
     gameType,
     bombPlantedOn,
-    maxRounds
+    maxRounds,
+    players
  }) => {
     window.SetTimer = function(p_Time: number) {
         setTime(1000 * p_Time);
@@ -45,7 +54,7 @@ const Header: React.FC<Props> = ({
             </div>
 
             <div id="promodVersion">
-                v 0.7
+                v 0.8
             </div>
 
             <div id="debug">
@@ -56,14 +65,21 @@ const Header: React.FC<Props> = ({
 
             {showHud &&
                 <div id="inGameHeader" className="fadeInTop">
-                    {teamAttackersClan 
-                    ?
-                        <div id="teamAttackers">
-                            {teamAttackersClan}
-                        </div>
-                    :
-                        <div></div>
-                    }
+                    <div className="playerIcons attackers">
+                        {(players !== undefined && players[Teams.Attackers].length > 0) &&
+                            <>
+                                {players[Teams.Attackers].map((player: Player, index: number) => (
+                                    <div key={index} className={"playerIcon " + (player.isDead?'isDead':'isAlive') + " isAttacker"}>
+                                        {player.isDead ?
+                                            <img src={skull} alt="Dead" />
+                                        :
+                                            <img src={like} alt="Alive" />
+                                        }
+                                    </div>
+                                ))}
+                            </>
+                        }
+                    </div>
                     <div id="score">
                         <div id="scoreAttackers">
                             {/*<span id="team">Attackers</span>*/}
@@ -104,14 +120,21 @@ const Header: React.FC<Props> = ({
                             <span className="points">{teamDefendersScore??0}</span>
                         </div>
                     </div>
-                    {teamDefendersClan 
-                    ?
-                        <div id="teamDefenders">
-                            {teamDefendersClan}
-                        </div>
-                    :
-                        <div></div>
-                    }
+                    <div className="playerIcons defenders">
+                        {(players !== undefined && players[Teams.Defenders].length > 0) &&
+                            <>
+                                {players[Teams.Defenders].map((player: Player, index: number) => (
+                                    <div key={index} className={"playerIcon " + (player.isDead?'isDead':'isAlive') + " isDefender"}>
+                                        {player.isDead ?
+                                            <img src={skull} alt="Dead" />
+                                        :
+                                            <img src={like} alt="Alive" />
+                                        }
+                                    </div>
+                                ))}
+                            </>
+                        }
+                    </div>
                 </div>
             }
         </>
