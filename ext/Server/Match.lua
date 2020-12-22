@@ -1133,6 +1133,7 @@ function Match:SpawnPlayer(p_Player, p_Transform, p_Pose, p_SoldierBp, p_KnifeOn
         end
 
         local l_WeaponIndex = 0;
+        local l_IsAmmoOrMedicBag = false;
         for l_Index, l_LoadoutItem in ipairs(l_Loadout) do
             if l_LoadoutItem == nil then
                 goto _weapon_continue_
@@ -1148,11 +1149,20 @@ function Match:SpawnPlayer(p_Player, p_Transform, p_Pose, p_SoldierBp, p_KnifeOn
             elseif l_WeaponIndex == 1 then --secondary
                 p_Player:SelectWeapon(WeaponSlot.WeaponSlot_1, l_LoadoutItem, l_Attachments)
             elseif l_WeaponIndex == 2 then --tactical
-                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_3, l_LoadoutItem, l_Attachments)
+                local s_Asset = Asset(l_LoadoutItem)
+                local s_AssetName = s_Asset.name:match("/U_.+"):sub(4)
+                if s_AssetName ~= nil and s_AssetName == "Medkit" or s_AssetName == "Ammobag" then
+                    l_IsAmmoOrMedicBag = true
+                end
+
+                if l_IsAmmoOrMedicBag then
+                    p_Player:SelectWeapon(WeaponSlot.WeaponSlot_4, l_LoadoutItem, l_Attachments)
+                else
+                    p_Player:SelectWeapon(WeaponSlot.WeaponSlot_3, l_LoadoutItem, l_Attachments)
+                end
             elseif l_WeaponIndex == 3 then --lethal
                 p_Player:SelectWeapon(WeaponSlot.WeaponSlot_6, l_LoadoutItem, l_Attachments)
             elseif l_WeaponIndex == 4 then --knife
-                p_Player:SelectWeapon(WeaponSlot.WeaponSlot_5, l_LoadoutItem, l_Attachments)
                 p_Player:SelectWeapon(WeaponSlot.WeaponSlot_7, l_LoadoutItem, l_Attachments)
             end
     
