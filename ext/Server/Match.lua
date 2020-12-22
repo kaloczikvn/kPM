@@ -118,6 +118,11 @@ function Match:OnEngineUpdate(p_GameState, p_DeltaTime)
         if kPMConfig.DebugMode then
             print("transitioning from " .. self.m_LastState .. " to " .. p_GameState)
         end
+
+        -- Reset tickets
+        TicketManager:SetTicketCount(self.m_Attackers:GetTeamId(), 0)
+        TicketManager:SetTicketCount(self.m_Defenders:GetTeamId(), 0)
+
         self.m_LastState = self.m_CurrentState
     end
 
