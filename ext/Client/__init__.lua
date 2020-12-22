@@ -58,6 +58,8 @@ function kPMClient:__init()
     self.m_ExplosionEntityData = nil
 
     self.m_PlantSoundEntityData = nil
+    self.m_PlantedSoundEntityData = nil
+    self.m_AlarmEntity = nil
     self.m_PlantSent = false
 
     -- Freecamera
@@ -256,6 +258,8 @@ function kPMClient:OnLevelLoadResources()
     self.m_ExplosionEntityData = nil
 
     self.m_PlantSoundEntityData = nil
+    self.m_PlantedSoundEntityData = nil
+    self.m_AlarmEntity = nil
 end
 
 function kPMClient:OnUpdateInput(p_DeltaTime)
@@ -263,11 +267,6 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     if self.m_SpecCam ~= nil then
         self.m_SpecCam:OnUpdateInput(p_DeltaTime)
     end
-
-    -- TODO: Remove me
-    --[[if InputManager:WentKeyDown(InputDeviceKeys.IDK_F8) then
-        NetEvents:Send("kPM:TogglePlant", "plant", "A", Vec3(-341.6533203125, 71.388473510742, 297.3525390625), true)
-    end]]
 
     -- Open Team menu
     if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
@@ -498,6 +497,11 @@ function kPMClient:OnGameStateChanged(p_OldGameState, p_GameState)
     self.m_BombLocation = nil
     self:DestroyLaptop()
 
+    if self.m_AlarmEntity ~= nil then
+        self.m_AlarmEntity:FireEvent('Stop')
+        self.m_AlarmEntity = nil
+    end
+
     if p_GameState == GameStates.Strat then
         self.m_StatVision:SetStratVision()
     else
@@ -687,15 +691,18 @@ function kPMClient:OnBombPlanted(p_BombSite, p_BombLocation)
     self.m_BombSite = p_BombSite
     self.m_BombLocation = p_BombLocation
     self:PlaceLaptop()
-
-    print('info: bomb location:')
-    print(self.m_BombLocation)
+    self:OnPlaySoundPlanted(p_BombLocation)
 
     WebUI:ExecuteJS('BombPlanted("' .. p_BombSite .. '");')
 end
 
 function kPMClient:OnBombDefused()
     print('info: bomb defused')
+
+    if self.m_AlarmEntity ~= nil then
+        self.m_AlarmEntity:FireEvent('Stop')
+        self.m_AlarmEntity = nil
+    end
 
     -- I dont think this is necessary because on gamestate change we clear out the bombsites
     self.m_BombSite = nil
@@ -781,20 +788,94 @@ function kPMClient:OnPlaySoundPlanting(p_Trans)
 end
 
 function kPMClient:GetPlantSoundEntityData()
-       if self.m_PlantSoundEntityData ~= nil then
+    if self.m_PlantSoundEntityData ~= nil then
 		return self.m_PlantSoundEntityData
     end
     
-	local s_Original = ResourceManager:SearchForInstanceByGuid(Guid('9A715038-A22A-409A-AB33-E12B4338AA6A'))
+	local s_Original = ResourceManager:SearchForInstanceByGuid(Guid('3BED6616-97F4-45A9-9432-8B8876F554B3'))
 
 	if s_Original == nil then
 		print('Could not find sound template')
 		return nil
     end
+
+    local s_Beep = ResourceManager:SearchForInstanceByGuid(Guid('30BDBD94-5011-4929-B714-85702A9CA53C'))
+
+	if s_Beep == nil then
+		print('Could not find beep template')
+		return nil
+    end
+
+    local s_BeepEntity = SoundPatchAsset(s_Beep:Clone())
+    s_BeepEntity.loudness = 100.0
+    s_BeepEntity.radius = 35.0
     
     self.m_PlantSoundEntityData = SoundEffectEntityData(s_Original:Clone())
+    self.m_PlantSoundEntityData.sound = s_BeepEntity
     
 	return self.m_PlantSoundEntityData
+end
+
+function kPMClient:OnPlaySoundPlanted(p_Trans)
+    if p_Trans == nil then
+		print('No plant location')
+		return
+    end
+
+    local s_Data = self:GetPlantedSoundEntityData()
+
+	if s_Data == nil then
+		print('Could not get sound data')
+		return
+    end
+    
+	local s_Transform = LinearTransform()
+	s_Transform.trans = p_Trans
+
+	local s_Entity = EntityManager:CreateEntity(s_Data, s_Transform)
+
+	if s_Entity == nil then
+		print('Could not create planted entity.')
+		return
+    end
+
+    if self.m_AlarmEntity ~= nil then
+        self.m_AlarmEntity:Destory()
+        self.m_AlarmEntity = nil
+    end
+
+    self.m_AlarmEntity = s_Entity
+    self.m_AlarmEntity:FireEvent('Start')
+end
+
+function kPMClient:GetPlantedSoundEntityData()
+    if self.m_PlantedSoundEntityData ~= nil then
+		return self.m_PlantedSoundEntityData
+    end
+    
+	local s_Original = ResourceManager:SearchForInstanceByGuid(Guid('3BED6616-97F4-45A9-9432-8B8876F554B3'))
+
+	if s_Original == nil then
+		print('Could not find sound template')
+		return nil
+    end
+
+    local s_Alarm = ResourceManager:SearchForInstanceByGuid(Guid('ACF794EC-7C7E-4055-A20D-E108F61FDFF7'))
+
+	if s_Alarm == nil then
+		print('Could not find beep template')
+		return nil
+    end
+
+    local s_AlarmEntity = SoundPatchAsset(s_Alarm:Clone())
+    s_AlarmEntity.loudness = 60.0
+    s_AlarmEntity.radius = 15.0
+    s_AlarmEntity.isLooping = false
+    
+    self.m_PlantedSoundEntityData = SoundEffectEntityData(s_Original:Clone())
+    self.m_PlantedSoundEntityData.sound = s_AlarmEntity
+    
+	return self.m_PlantedSoundEntityData
 end
 
 function kPMClient:OnCleanup(p_EntityType)

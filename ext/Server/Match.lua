@@ -1151,7 +1151,7 @@ function Match:SpawnPlayer(p_Player, p_Transform, p_Pose, p_SoldierBp, p_KnifeOn
             elseif l_WeaponIndex == 2 then --tactical
                 local s_Asset = Asset(l_LoadoutItem)
                 local s_AssetName = s_Asset.name:match("/U_.+"):sub(4)
-                if s_AssetName ~= nil and s_AssetName == "Medkit" or s_AssetName == "Ammobag" then
+                if s_AssetName ~= nil and (s_AssetName == "Medkit" or s_AssetName == "Ammobag") then
                     l_IsAmmoOrMedicBag = true
                 end
 

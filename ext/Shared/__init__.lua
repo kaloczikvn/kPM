@@ -111,6 +111,14 @@ function kPMShared:OnPartitionLoaded(p_Partition)
                     l_CameraEntityData.enabled = false
                 end
             end
+        elseif p_Partition.guid == Guid("3E80FB04-9283-4A39-81A1-280936590079") then
+            for _, l_Instance in pairs(p_Partition.instances) do
+                if l_Instance.instanceGuid == Guid("678635B2-D620-4588-BB02-CA349C657376") then
+                    local l_ConeOutputNodeData = ConeOutputNodeData(l_Instance)
+                    l_ConeOutputNodeData:MakeWritable()
+                    l_ConeOutputNodeData.gain = 20.0
+                end
+            end
         end
     end
 
@@ -138,6 +146,8 @@ function kPMShared:RegisterHooks()
             bundles = {
                 bundles[1],
                 'Levels/COOP_010/COOP_010',
+                'Levels/COOP_010/AB01_Parent',
+                'Levels/COOP_010/AB01_Art_Parent',
                 'Levels/COOP_010/AB06_Parent',
             }
             
@@ -200,16 +210,11 @@ function kPMShared:SpawnIconEntities(p_Trans, p_Id)
         s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityBGuid))
     end
 
-    print("Icon spawning for: " .. p_Id)
-    print(s_CustomMapMarkerEntityData)
-
     if s_CustomMapMarkerEntityData ~= nil then
         local s_EntityPos = LinearTransform()
         s_EntityPos.trans = p_Trans.trans
 
         local s_CreatedEntity = EntityManager:CreateEntity(s_CustomMapMarkerEntityData, s_EntityPos)
-
-        print(s_CreatedEntity)
 
         if s_CreatedEntity ~= nil then
             s_CreatedEntity:Init(Realm.Realm_ClientAndServer, true)

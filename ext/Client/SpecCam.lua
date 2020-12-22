@@ -228,7 +228,7 @@ function SpecCam:Create()
 	s_Entity:Init(Realm.Realm_Client, true);
 
 	self.m_CameraData.transform = ClientUtils:GetCameraTransform()
-	self.m_CameraData.fov = 60
+	self.m_CameraData.fov = 90
 	self.m_Camera = s_Entity
 end
 
