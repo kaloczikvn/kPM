@@ -53,24 +53,24 @@ end
 
 function SpecCam:SetCameraTarget(p_Player)
 	if p_Player == nil then
-		return false
+		return
 	end
 
 	if not p_Player.alive then
-		return false
+		return
 	end
 
 	if p_Player.soldier == nil then
-		return false
+		return
 	end
 
 	local s_LocalPlayer = PlayerManager:GetLocalPlayer()
 	if s_LocalPlayer == nil then
-		return false
+		return
 	end
 
 	if p_Player.teamId ~= s_LocalPlayer.teamId then
-		return false
+		return
 	end
 
 	local s_SpectatedPlayer = SpectatorManager:GetSpectatedPlayer()
@@ -85,14 +85,12 @@ function SpecCam:SetCameraTarget(p_Player)
 	WebUI:ExecuteJS('SpectatorTarget("'.. tostring(p_Player.name) .. '");')
 
 	self.m_TargetPlayerId = p_Player.id
-	return true
 end
 
 function SpecCam:GetRandomCameraTarget()
 	local s_LocalPlayer = PlayerManager:GetLocalPlayer()
-
 	if s_LocalPlayer == nil then
-		return
+		return nil
 	end
 
 	local s_PlayersList = PlayerManager:GetPlayersByTeam(s_LocalPlayer.teamId)
@@ -138,9 +136,8 @@ end
 
 function SpecCam:GetNextCameraTarget()
 	local s_LocalPlayer = PlayerManager:GetLocalPlayer()
-
 	if s_LocalPlayer == nil then
-		return
+		return nil
 	end
 
 	local s_PlayersList = PlayerManager:GetPlayersByTeam(s_LocalPlayer.teamId)

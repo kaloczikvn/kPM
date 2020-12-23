@@ -6,7 +6,6 @@ require ("__shared/Utils")
 require ("__shared/GameTypes")
 
 require ("Team")
-require ("WeaponDefinitions")
 require ("LoadoutManager")
 require ("LoadoutDefinitions")
 require ("Match")
@@ -18,7 +17,11 @@ function kPMServer:__init()
     self:RegisterEvents()
 
     -- Hold gamestate information
-    self.m_GameState = GameStates.None
+    if kPMConfig.GameType == GameTypes.Public then
+        self.m_GameState = GameStates.Warmup
+    else
+        self.m_GameState = GameStates.None
+    end
 
     -- Create our team information
     self.m_Attackers = Team(TeamId.Team2, "Attackers", "") -- RUS

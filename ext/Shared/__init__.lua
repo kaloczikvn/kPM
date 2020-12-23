@@ -55,7 +55,7 @@ function kPMShared:OnLevelRegisterEntityResources()
         self.m_LevelName = LevelNameHelper:GetLevelName()
     end
 
-    local s_Registry = RegistryContainer(ResourceManager:SearchForInstanceByGuid(MapsConfig[self.m_LevelName]["REGISTRY_CONTAINER"]["INSTANCE"]))
+    local s_Registry = RegistryContainer()
     
     if s_Registry == nil then
         error('s_Registry not found')
@@ -90,39 +90,65 @@ function kPMShared:OnPartitionLoaded(p_Partition)
     end
 
     if self.m_LevelName ~= nil then
-        if p_Partition.guid == MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"]["PARTITION"] then
-            for _, l_Instance in pairs(p_Partition.instances) do
-                if l_Instance.instanceGuid == MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"]["INSTANCE"] then
-                    local l_EffectsWorldData = WorldPartData(l_Instance)
-                    for _, l_Object in pairs(l_EffectsWorldData.objects) do
-                        if l_Object:Is("EffectReferenceObjectData") then
-                            local l_EffectReferenceObjectData = EffectReferenceObjectData(l_Object)
-                            l_EffectReferenceObjectData:MakeWritable()
-                            l_EffectReferenceObjectData.excluded = true
+        if MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"] ~= nil then
+            if p_Partition.guid == MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"]["PARTITION"] then
+                for _, l_Instance in pairs(p_Partition.instances) do
+                    if l_Instance.instanceGuid == MapsConfig[self.m_LevelName]["EFFECTS_WORLD_PART_DATA"]["INSTANCE"] then
+                        local l_EffectsWorldData = WorldPartData(l_Instance)
+                        for _, l_Object in pairs(l_EffectsWorldData.objects) do
+                            if l_Object:Is("EffectReferenceObjectData") then
+                                local l_EffectReferenceObjectData = EffectReferenceObjectData(l_Object)
+                                l_EffectReferenceObjectData:MakeWritable()
+                                l_EffectReferenceObjectData.excluded = true
+                            end
                         end
                     end
                 end
             end
-        elseif p_Partition.guid == MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"]["PARTITION"] then
-            for _, l_Instance in pairs(p_Partition.instances) do
-                if l_Instance.instanceGuid == MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"]["INSTANCE"] then
-                    local l_CameraEntityData = CameraEntityData(l_Instance)
-                    l_CameraEntityData:MakeWritable()
-                    l_CameraEntityData.enabled = false
-                end
-            end
-        elseif p_Partition.guid == Guid("3E80FB04-9283-4A39-81A1-280936590079") then
-            for _, l_Instance in pairs(p_Partition.instances) do
-                if l_Instance.instanceGuid == Guid("678635B2-D620-4588-BB02-CA349C657376") then
-                    local l_ConeOutputNodeData = ConeOutputNodeData(l_Instance)
-                    l_ConeOutputNodeData:MakeWritable()
-                    l_ConeOutputNodeData.gain = 20.0
+        end
+
+        if MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"] ~= nil then
+            if p_Partition.guid == MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"]["PARTITION"] then
+                for _, l_Instance in pairs(p_Partition.instances) do
+                    if l_Instance.instanceGuid == MapsConfig[self.m_LevelName]["CAMERA_ENTITY_DATA"]["INSTANCE"] then
+                        local l_CameraEntityData = CameraEntityData(l_Instance)
+                        l_CameraEntityData:MakeWritable()
+                        l_CameraEntityData.enabled = false
+                    end
                 end
             end
         end
     end
 
+    if p_Partition.guid == Guid("3E80FB04-9283-4A39-81A1-280936590079") then
+        for _, l_Instance in pairs(p_Partition.instances) do
+            if l_Instance.instanceGuid == Guid("678635B2-D620-4588-BB02-CA349C657376") then
+                local l_ConeOutputNodeData = ConeOutputNodeData(l_Instance)
+                l_ConeOutputNodeData:MakeWritable()
+                l_ConeOutputNodeData.gain = 20.0
+            end
+        end
+    end
+
+    if p_Partition.guid == Guid("F256E142-C9D8-4BFE-985B-3960B9E9D189") then
+        for _, l_Instance in pairs(p_Partition.instances) do
+            if l_Instance.instanceGuid == Guid("A988B874-7307-49F8-8D18-30A68DDBC3F3") then
+                local l_VeniceFPSCameraData = VeniceFPSCameraData(l_Instance)
+                l_VeniceFPSCameraData:MakeWritable()
+                l_VeniceFPSCameraData.suppressionBlurAmountMultiplier = 0.0
+                l_VeniceFPSCameraData.suppressionBlurSizeMultiplier = 0.0
+            end
+        end
+    end
+
     for _, l_Instance in pairs(p_Partition.instances) do
+        if l_Instance:Is('EntityVoiceOverInfo') then
+            if l_Instance ~= nil then
+                local l_EntityVoiceOverInfo = EntityVoiceOverInfo(l_Instance)
+                l_EntityVoiceOverInfo:MakeWritable()
+                l_EntityVoiceOverInfo.voiceOverType = nil
+            end
+        end
         if l_Instance.instanceGuid == self.s_CustomMapMarkerEntityAGuid or l_Instance.instanceGuid == self.s_CustomMapMarkerEntityBGuid then
 			return
 		end
@@ -178,7 +204,7 @@ function kPMShared:SpawnPlant(p_Trans, p_Id)
 end
 
 function kPMShared:SpawnPlantObjects(p_Trans)
-    local l_PlantBp = ResourceManager:SearchForDataContainer('Props/StreetProps/SupplyAirdrop_02/SupplyAirdrop_02')
+    local l_PlantBp = ResourceManager:SearchForDataContainer('Objects/VendingMachine_01/VendingMachine_01')
 
 	if l_PlantBp == nil then
 		error('err: could not find the plant blueprint.')

@@ -1,7 +1,7 @@
 class "kPMClient"
 
 require("ClientCommands")
-require("SpecCam")
+--require("SpecCam")
 require("UICleanup")
 require("StratVision")
 require("__shared/GameStates")
@@ -9,19 +9,17 @@ require("__shared/kPMConfig")
 require("__shared/MapsConfig")
 require("__shared/LevelNameHelper")
 
+local IngameSpectator = require('ingame-spectator')
+
 function kPMClient:__init()
     -- Start the client initialization
     print("client initialization")
-
-    --  Console commands
-    self.m_PositionCommand = nil
 
     -- Extension events
     self.m_ExtensionLoadedEvent = nil
     self.m_ExtensionUnloadedEvent = nil
 
     self.m_PartitionLoadedEvent = nil
-    self.m_PlayerChatEvent = nil
 
     -- These are the specific events that are required to kick everything else off
     self.m_ExtensionLoadedEvent = Events:Subscribe("Extension:Loaded", self, self.OnExtensionLoaded)
@@ -45,10 +43,14 @@ function kPMClient:__init()
     self.m_ScoreboardActive = false
     
     -- The current gamestate, this is read-only and should only be changed by the SERVER
-    self.m_GameState = GameStates.None
-
+    if kPMConfig.GameType == GameTypes.Public then
+        self.m_GameState = GameStates.Warmup
+    else
+        self.m_GameState = GameStates.None
+    end
+    
     -- The current gametype
-    self.m_GameType = GameTypes.Public
+    self.m_GameType = kPMConfig.GameType
 
     self.m_AttackersTeamId = TeamId.Team2
     self.m_DefendersTeamId = TeamId.Team1
@@ -61,9 +63,6 @@ function kPMClient:__init()
     self.m_PlantedSoundEntityData = nil
     self.m_AlarmEntity = nil
     self.m_PlantSent = false
-
-    -- Freecamera
-    self.m_SpecCam = SpecCam()
 
     -- Start vision (black and white)
     self.m_StatVision = StratVision()
@@ -179,8 +178,9 @@ function kPMClient:OnSetSelectedTeam(p_Team)
     end
 
     if not s_LocalPlayer.alive and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
-        self.m_SpecCam:Enable()
-        self.m_SpecCam:GetRandomSpecWhenTeamSwitch()
+        --[[self.m_SpecCam:Enable()
+        self.m_SpecCam:GetRandomSpecWhenTeamSwitch()]]
+        IngameSpectator:enable()
     end
 
     if p_Team == 3 then -- auto-join
@@ -228,23 +228,50 @@ end
 -- Console Commands
 -- ==========
 function kPMClient:RegisterCommands()
-    print("registering commands")
-    
-    -- Register console commands for users to leverage
-    --self.m_PositionCommand = Console:Register("kpm_player_pos", "Displays the current player position", ClientCommands.PlayerPosition)
-    --self.m_ReadyUpCommand = Console:Register("kpm_ready_up", "Toggles the ready up state", ClientCommands.ReadyUp)
     self.m_ForceReadyUpCommand = Console:Register("kpm_force_ready_up", "Toggles all players to ready up state", ClientCommands.ForceReadyUp)
 end
 
 function kPMClient:UnregisterCommands()
-    print("unregistering commands")
+    Console:Deregister("kpm_force_ready_up")
 end
 
 function kPMClient:OnLevelDestroyed()
-    -- Handle cleanup when level is destroyed
-    if self.m_SpecCam ~= nil then
-        self.m_SpecCam:OnLevelDestroy()
+    print('OnLevelDestroyed')
+
+    self.m_PingTable = {}
+    self.m_PlayerReadyUpPlayersTable = {}
+    self.m_RupHeldTime = 0.0
+    self.m_RupHeldReady = false
+
+    self.m_PlantOrDefuseHeldTime = 0.0
+    self.m_StartedPlantingOrDefusing = false
+    self.m_BombSite = nil
+    self.m_BombLocation = nil
+    self.m_LaptopEntity = nil
+
+    self.m_PlayerInputs = true
+
+    self.m_TabHeldTime = 0.0
+    self.m_ScoreboardActive = false
+    
+    if kPMConfig.GameType == GameTypes.Public then
+        self.m_GameState = GameStates.Warmup
+    else
+        self.m_GameState = GameStates.None
     end
+    
+    self.m_GameType = kPMConfig.GameType
+    
+    self.m_AttackersTeamId = TeamId.Team2
+    self.m_DefendersTeamId = TeamId.Team1
+
+    self.m_FirstSpawn = false
+    self.m_ExplosionEntityData = nil
+
+    self.m_PlantSoundEntityData = nil
+    self.m_PlantedSoundEntityData = nil
+    self.m_AlarmEntity = nil
+    self.m_PlantSent = false
 end
 
 function kPMClient:OnLevelLoaded()
@@ -264,9 +291,9 @@ end
 
 function kPMClient:OnUpdateInput(p_DeltaTime)
     -- Update the freecam
-    if self.m_SpecCam ~= nil then
+    --[[if self.m_SpecCam ~= nil then
         self.m_SpecCam:OnUpdateInput(p_DeltaTime)
-    end
+    end]]
 
     -- Open Team menu
     if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
@@ -294,6 +321,9 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
 
     -- Get the local player id
     local s_Player = PlayerManager:GetLocalPlayer()
+    if s_Player == nil then
+        return
+    end
 
     -- Tab held or not
     self:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
@@ -329,50 +359,49 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
     end
 
     -- Update the freecam
-    if self.m_SpecCam ~= nil then
+    --[[if self.m_SpecCam ~= nil then
         self.m_SpecCam:OnUpdateInputHook(p_Hook, p_Cache, p_DeltaTime)
-    end
+    end]]
 end
 
 function kPMClient:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
     -- Get the interact level
     local s_InteractLevel = p_Cache:GetLevel(InputConceptIdentifiers.ConceptScoreboard)
 
-    local l_ScoreboardActive = self.m_ScoreboardActive
+    local s_ScoreboardActive = self.m_ScoreboardActive
 
-    local l_Player = PlayerManager:GetLocalPlayer()
-    
-    if l_Player == nil then
+    local s_Player = PlayerManager:GetLocalPlayer()
+    if s_Player == nil then
         return
     end
 
     -- If the player is holding the interact key then update our variables and clear it for the next frame
     if s_InteractLevel > 0.0 then
-        l_ScoreboardActive = true
+        s_ScoreboardActive = true
         self.m_TabHeldTime = self.m_TabHeldTime + p_DeltaTime
         p_Cache:SetLevel(InputConceptIdentifiers.ConceptScoreboard, 0.0)
     else
         self.m_TabHeldTime = 0.0
-        l_ScoreboardActive = false
+        s_ScoreboardActive = false
     end
 
     if self.m_TabHeldTime >= 3.0 then
-        if l_ScoreboardActive == true then
-            self:OnUpdateScoreboard(l_Player)
+        if s_ScoreboardActive == true then
+            self:OnUpdateScoreboard(s_Player)
         end
 
         -- Reset our timer
         self.m_TabHeldTime = 0.0
     end
 
-    if self.m_ScoreboardActive ~= l_ScoreboardActive then
-        self.m_ScoreboardActive = l_ScoreboardActive
+    if self.m_ScoreboardActive ~= s_ScoreboardActive then
+        self.m_ScoreboardActive = s_ScoreboardActive
 
-        if l_ScoreboardActive == true then
-            self:OnUpdateScoreboard(l_Player)
+        if s_ScoreboardActive == true then
+            self:OnUpdateScoreboard(s_Player)
         end
 
-        WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', l_ScoreboardActive) .. ");")
+        WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', s_ScoreboardActive) .. ");")
     end
 end
 
@@ -380,6 +409,9 @@ function kPMClient:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
     local s_SelectedPlant = self:IsPlayerInsideThePlantZone()
 
     local s_Player = PlayerManager:GetLocalPlayer()
+    if s_Player == nil then
+        return
+    end
 
     local s_PlantSent = self.m_PlantSent
 
@@ -641,37 +673,45 @@ function kPMClient:OnStartWebUITimer(p_Time)
 end
 
 function kPMClient:OnSetRoundEndInfoBox(p_WinnerTeamId)
-    local isPlayerWinner = false
+    local s_IsPlayerWinner = false
 
-    local l_Player = PlayerManager:GetLocalPlayer()
-    if l_Player.teamId == p_WinnerTeamId then
-        isPlayerWinner = true
+    local s_Player = PlayerManager:GetLocalPlayer()
+    if s_Player == nil then
+        return
+    end
+
+    if s_Player.teamId == p_WinnerTeamId then
+        s_IsPlayerWinner = true
     end
     
     if p_WinnerTeamId == self.m_AttackersTeamId then
-        WebUI:ExecuteJS('UpdateRoundEndInfoBox('.. tostring(isPlayerWinner) .. ', "attackers");')
+        WebUI:ExecuteJS('UpdateRoundEndInfoBox('.. tostring(s_IsPlayerWinner) .. ', "attackers");')
     else
-        WebUI:ExecuteJS('UpdateRoundEndInfoBox('.. tostring(isPlayerWinner) .. ', "defenders");')
+        WebUI:ExecuteJS('UpdateRoundEndInfoBox('.. tostring(s_IsPlayerWinner) .. ', "defenders");')
     end
-    
+
     WebUI:ExecuteJS("ShowHideRoundEndInfoBox(true)")
 end
 
 function kPMClient:OnSetGameEnd(p_WinnerTeamId)
-    local isPlayerWinner = false
+    local s_IsPlayerWinner = false
 
     if p_WinnerTeamId == nil then
-        WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "draw");')
+        WebUI:ExecuteJS('SetGameEnd('.. tostring(s_IsPlayerWinner) .. ', "draw");')
     else
-        local l_Player = PlayerManager:GetLocalPlayer()
-        if l_Player.teamId == p_WinnerTeamId then
-            isPlayerWinner = true
+        local s_Player = PlayerManager:GetLocalPlayer()
+        if s_Player == nil then
+            return
+        end
+
+        if s_Player.teamId == p_WinnerTeamId then
+            s_IsPlayerWinner = true
         end
         
         if p_WinnerTeamId == self.m_AttackersTeamId then
-            WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "attackers");')
+            WebUI:ExecuteJS('SetGameEnd('.. tostring(s_IsPlayerWinner) .. ', "attackers");')
         else
-            WebUI:ExecuteJS('SetGameEnd('.. tostring(isPlayerWinner) .. ', "defenders");')
+            WebUI:ExecuteJS('SetGameEnd('.. tostring(s_IsPlayerWinner) .. ', "defenders");')
         end
     end
 end
@@ -912,8 +952,9 @@ function kPMClient:OnPlayerRespawn(p_Player)
 
     self:OnUpdateScoreboard(s_Player)
 
-    if p_Player.id == s_Player.id then
-        self.m_SpecCam:Disable()
+    if p_Player.name == s_Player.name then
+        --self.m_SpecCam:Disable()
+        IngameSpectator:disable()
 
         WebUI:ExecuteJS('SpectatorEnabled('.. tostring(false) .. ');')
     end
@@ -937,7 +978,8 @@ function kPMClient:OnPlayerKilled(p_Player)
         if self.m_GameState == GameStates.FirstHalf or
             self.m_GameState == GameStates.SecondHalf
         then
-            self.m_SpecCam:Enable()
+            --self.m_SpecCam:Enable()
+            IngameSpectator:enable()
         end
     end
 end
@@ -967,50 +1009,50 @@ function kPMClient:OnPlayerDeleted(p_Player)
 end
 
 function kPMClient:IsPlayerInsideThePlantZone()
-    local l_LevelName = LevelNameHelper:GetLevelName()
-    if l_LevelName == nil then
+    local s_LevelName = LevelNameHelper:GetLevelName()
+    if s_LevelName == nil then
         return nil
     end
 
-    local localPlayer = PlayerManager:GetLocalPlayer()
-    if localPlayer == nil then
-        return nil
+    local s_Player = PlayerManager:GetLocalPlayer()
+    if s_Player == nil then
+        return
     end
 
     -- Check to see if the player is alive
-    if localPlayer.alive == false then
+    if s_Player.alive == false then
         return nil
     end
 
     -- Get the local soldier instance
-    local localSoldier = localPlayer.soldier
-    if localSoldier == nil then
+    local s_Soldier = s_Player.soldier
+    if s_Soldier == nil then
         return nil
     end
 
     -- Get the soldier LinearTransform
-    local soldierLinearTransform = localSoldier.worldTransform
+    local s_SoldierLinearTransform = s_Soldier.worldTransform
 
     -- Get the position vector
-    local position = soldierLinearTransform.trans
+    local p_Position = s_SoldierLinearTransform.trans
 
-    if localPlayer.teamId == self.m_AttackersTeamId and self.m_BombSite == nil and self.m_BombLocation == nil then
+    if s_Player.teamId == self.m_AttackersTeamId and self.m_BombSite == nil and self.m_BombLocation == nil then
         -- If the player is attacker and the bomb is not planted
 
-        if position:Distance(MapsConfig[l_LevelName]["PLANT_A"]["POS"].trans) <= MapsConfig[l_LevelName]["PLANT_A"]["RADIUS"] then
+        if p_Position:Distance(MapsConfig[s_LevelName]["PLANT_A"]["POS"].trans) <= MapsConfig[s_LevelName]["PLANT_A"]["RADIUS"] then
             return "A"
         end
 
-        if position:Distance(MapsConfig[l_LevelName]["PLANT_B"]["POS"].trans) <= MapsConfig[l_LevelName]["PLANT_B"]["RADIUS"] then
+        if p_Position:Distance(MapsConfig[s_LevelName]["PLANT_B"]["POS"].trans) <= MapsConfig[s_LevelName]["PLANT_B"]["RADIUS"] then
             return "B"
         end
     end
 
-    if localPlayer.teamId == self.m_DefendersTeamId and self.m_BombSite ~= nil and self.m_BombLocation ~= nil then
-        local dist = position:Distance(self.m_BombLocation)
-        if dist ~= nil then
+    if s_Player.teamId == self.m_DefendersTeamId and self.m_BombSite ~= nil and self.m_BombLocation ~= nil then
+        local s_Dist = p_Position:Distance(self.m_BombLocation)
+        if s_Dist ~= nil then
             -- If the player is defender and the bomb is planted
-            if dist <= kPMConfig.BombRadius then
+            if s_Dist <= kPMConfig.BombRadius then
                 -- If the a defender player is inside the defuse radius
                 return self.m_BombSite
             end

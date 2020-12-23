@@ -48,13 +48,13 @@ kPMConfig =
     MaxStratTime = 10.0,
 
     -- Maximum knife round time (default: 5 minutes)
-    MaxKnifeRoundTime = 300.0,
+    MaxKnifeRoundTime = 120.0,
 
     -- Maximum transitition time between gamestates (default: 2 seconds)
     MaxTransititionTime = 5.0,
 
     -- Round time (default: 10 minutes)
-    MaxRoundTime = 300.0,
+    MaxRoundTime = 240.0,
 
     -- Game end time (default: 20 sec)
     MaxEndgameTime = 20.0,
@@ -67,7 +67,7 @@ kPMConfig =
 
     -- Bomb related stuff
     BombRadius = 1.5,
-    BombTime = 45.0,
+    BombTime = 60.0,
     PlantTime = 5.0,
     DefuseTime = 5.0,
 }

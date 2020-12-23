@@ -1,25 +1,8 @@
 class "LoadoutManager"
 
 require ("__shared/kPMConfig")
-require ("__shared/LoadoutLoader")
 
 function LoadoutManager:__init()
-    -- Created custom customizations
-    self.m_AttackerSoldierCustomizationAssault = nil
-    self.m_AttackerSoldierCustomizationSmg = nil
-    self.m_AttackerSoldierCustomizationDemo = nil
-    self.m_AttackerSoldierCustomizationRecon = nil
-
-    self.m_DefenderSoldierCustomizationAssault = nil
-    self.m_DefenderSoldierCustomizationSmg = nil
-    self.m_DefenderSoldierCustomizationDemo = nil
-    self.m_DefenderSoldierCustomizationRecon = nil
-
-    self.m_DebugSoldierCustomization = nil
-
-    -- Loader
-    self.m_LoadoutLoader = LoadoutLoader()
-
     -- Player loadouts
     self.m_PlayerLoadouts = { }
 end
@@ -28,28 +11,9 @@ function LoadoutManager:OnPartitionLoaded(p_Partition)
     if p_Partition == nil then
         return
     end
-
-    -- Forward event to loadout loader
-    self.m_LoadoutLoader:OnPartitionLoaded(p_Partition)
 end
 
 function LoadoutManager:OnLevelDestroyed()
-
-    -- Remove all custom customizations
-    self.m_AttackerSoldierCustomizationAssault = nil
-    self.m_AttackerSoldierCustomizationSmg = nil
-    self.m_AttackerSoldierCustomizationDemo = nil
-    self.m_AttackerSoldierCustomizationRecon = nil
-
-    self.m_DefenderSoldierCustomizationAssault = nil
-    self.m_DefenderSoldierCustomizationSmg = nil
-    self.m_DefenderSoldierCustomizationDemo = nil
-    self.m_DefenderSoldierCustomizationRecon = nil
-
-    self.m_DebugSoldierCustomization = nil
-
-    -- Update the loadout loader
-    self.m_LoadoutLoader:OnLevelDestroyed()
 end
 
 function LoadoutManager:IsKitAllowed(p_Player, p_Kit)
