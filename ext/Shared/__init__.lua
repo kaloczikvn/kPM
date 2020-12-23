@@ -12,8 +12,11 @@ function kPMShared:__init()
 
     self.m_LevelName = nil
 
-    self.s_CustomMapMarkerEntityAGuid = Guid('261E43BF-259B-41D2-BF3B-42069ASITE')
-    self.s_CustomMapMarkerEntityBGuid = Guid('271E43CF-269C-42D2-CF3C-69420BSITE')
+    self.m_CustomMapMarkerEntityAGuid = Guid('261E43BF-259B-41D2-BF3B-42069ASITE')
+    self.m_CustomMapMarkerEntityBGuid = Guid('271E43CF-269C-42D2-CF3C-69420BSITE')
+
+    self.m_CustomMapMarkerEntityAGenerated = nil
+    self.m_CustomMapMarkerEntityBGenerated = nil
 end
 
 function kPMShared:OnExtensionLoaded()
@@ -56,25 +59,19 @@ function kPMShared:OnLevelRegisterEntityResources()
     end
 
     local s_Registry = RegistryContainer()
-    
-    if s_Registry == nil then
-        error('s_Registry not found')
-        return
-    end
 
-    local s_CustomMapMarkerEntityAData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityAGuid))
+    local s_CustomMapMarkerEntityAData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.m_CustomMapMarkerEntityAGuid))
     if s_CustomMapMarkerEntityAData == nil then
         error('s_CustomMapMarkerEntityAData not found')
         return
     end
 
-    local s_CustomMapMarkerEntityBData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityBGuid))
+    local s_CustomMapMarkerEntityBData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.m_CustomMapMarkerEntityBGuid))
     if s_CustomMapMarkerEntityBData == nil then
         error('s_CustomMapMarkerEntityBData not found')
         return
     end
 
-    s_Registry:MakeWritable()
     s_Registry.entityRegistry:add(s_CustomMapMarkerEntityAData)
     s_Registry.entityRegistry:add(s_CustomMapMarkerEntityBData)
     ResourceManager:AddRegistry(s_Registry, ResourceCompartment.ResourceCompartment_Game)
@@ -149,16 +146,24 @@ function kPMShared:OnPartitionLoaded(p_Partition)
                 l_EntityVoiceOverInfo.voiceOverType = nil
             end
         end
-        if l_Instance.instanceGuid == self.s_CustomMapMarkerEntityAGuid or l_Instance.instanceGuid == self.s_CustomMapMarkerEntityBGuid then
+    end
+
+    for _, l_Instance in pairs(p_Partition.instances) do
+        if l_Instance.instanceGuid == self.m_CustomMapMarkerEntityAGuid or l_Instance.instanceGuid == self.m_CustomMapMarkerEntityBGuid then
 			return
 		end
     end
 
-    local s_EntityDataA = MapMarkerEntityDataGenerator:Create(self.s_CustomMapMarkerEntityAGuid, "A")
-    p_Partition:AddInstance(s_EntityDataA)
+    if self.m_CustomMapMarkerEntityAGenerated == nil then
+        self.m_CustomMapMarkerEntityAGenerated = MapMarkerEntityDataGenerator:Create(self.m_CustomMapMarkerEntityAGuid, "A")
+    end
 
-    local s_EntityDataB = MapMarkerEntityDataGenerator:Create(self.s_CustomMapMarkerEntityBGuid, "B")
-    p_Partition:AddInstance(s_EntityDataB)
+    if self.m_CustomMapMarkerEntityBGenerated == nil then
+        self.m_CustomMapMarkerEntityBGenerated = MapMarkerEntityDataGenerator:Create(self.m_CustomMapMarkerEntityBGuid, "B")
+    end
+
+    p_Partition:AddInstance(self.m_CustomMapMarkerEntityAGenerated)
+    p_Partition:AddInstance(self.m_CustomMapMarkerEntityBGenerated)
 end
 
 -- ==========
@@ -212,7 +217,7 @@ function kPMShared:SpawnPlantObjects(p_Trans)
     end
     
 	local l_Params = EntityCreationParams()
-	l_Params.transform.trans = p_Trans.trans
+	l_Params.transform = p_Trans
 	l_Params.networked = false
 
     local l_Bus = EntityManager:CreateEntitiesFromBlueprint(l_PlantBp, l_Params)
@@ -230,10 +235,11 @@ end
 
 function kPMShared:SpawnIconEntities(p_Trans, p_Id)
     local s_CustomMapMarkerEntityData = nil
+    print("SpawnIconEntities: "..p_Id)
     if p_Id == "A" then
-        s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityAGuid))
+        s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.m_CustomMapMarkerEntityAGuid))
     elseif p_Id == "B" then
-        s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.s_CustomMapMarkerEntityBGuid))
+        s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.m_CustomMapMarkerEntityBGuid))
     end
 
     if s_CustomMapMarkerEntityData ~= nil then

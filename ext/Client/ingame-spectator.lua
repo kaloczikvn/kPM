@@ -148,6 +148,10 @@ function IngameSpectator:setFirstPerson(firstPerson)
 end
 
 function IngameSpectator:enable()
+	if not kPMConfig.SpectatorEnabled then
+		return
+	end
+
 	if self:isEnabled() then
 		return
 	end
@@ -175,6 +179,10 @@ function IngameSpectator:enable()
 end
 
 function IngameSpectator:disable()
+	if not kPMConfig.SpectatorEnabled then
+		return
+	end
+	
 	if not self:isEnabled() then
 		return
     end
@@ -238,14 +246,16 @@ function IngameSpectator:spectateNextPlayer()
 	local players = PlayerManager:GetPlayers()
 	local localPlayer = PlayerManager:GetLocalPlayer()
 
-    if players ~= nil then
-        for i, player in players do
-            if player == self._spectatedPlayer then
-                currentIndex = i
-                break
-            end
-        end
-    end
+	if players == nil then
+		return
+	end
+
+	for i, player in pairs(players) do
+		if player == self._spectatedPlayer then
+			currentIndex = i
+			break
+		end
+	end
 
 	-- Increment so we start from the next player.
 	currentIndex = currentIndex + 1
@@ -276,6 +286,7 @@ function IngameSpectator:spectateNextPlayer()
 	if nextPlayer == nil then
 		self:switchToFreecam()
 	else
+		WebUI:ExecuteJS('SpectatorTarget("'.. tostring(nextPlayer.name) .. '");')
 		self:spectatePlayer(nextPlayer)
 	end
 end
@@ -301,7 +312,11 @@ function IngameSpectator:spectatePreviousPlayer()
 	local players = PlayerManager:GetPlayers()
 	local localPlayer = PlayerManager:GetLocalPlayer()
 
-	for i, player in players do
+	if players == nil then
+		return
+	end
+
+	for i, player in pairs(players) do
 		if player == self._spectatedPlayer then
 			currentIndex = i
 			break
@@ -337,6 +352,7 @@ function IngameSpectator:spectatePreviousPlayer()
 	if nextPlayer == nil then
 		self:switchToFreecam()
 	else
+		WebUI:ExecuteJS('SpectatorTarget("'.. tostring(nextPlayer.name) .. '");')
 		self:spectatePlayer(nextPlayer)
 	end
 end

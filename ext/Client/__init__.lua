@@ -43,11 +43,7 @@ function kPMClient:__init()
     self.m_ScoreboardActive = false
     
     -- The current gamestate, this is read-only and should only be changed by the SERVER
-    if kPMConfig.GameType == GameTypes.Public then
-        self.m_GameState = GameStates.Warmup
-    else
-        self.m_GameState = GameStates.None
-    end
+    self.m_GameState = GameStates.None
     
     -- The current gametype
     self.m_GameType = kPMConfig.GameType
@@ -295,6 +291,15 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
         self.m_SpecCam:OnUpdateInput(p_DeltaTime)
     end]]
 
+        -- Open Team menu
+        if InputManager:WentKeyDown(InputDeviceKeys.IDK_F8) then
+            local s_Player = PlayerManager:GetLocalPlayer()
+            if s_Player == nil then
+                return
+            end
+            print("Current positon: "..tostring(s_Player.soldier.worldTransform.trans))
+        end
+
     -- Open Team menu
     if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
         -- If the player never spawned we should force him to pick a team and a loadout first
@@ -308,6 +313,18 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
         -- If the player never spawned we should force him to pick a team and a loadout first
         if self.m_FirstSpawn then
             WebUI:ExecuteJS("OpenCloseLoadoutMenu();")
+        end
+    end
+
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_Space) or InputManager:WentKeyDown(InputDeviceKeys.IDK_ArrowRight) then
+        if IngameSpectator:isEnabled() then
+            IngameSpectator:spectateNextPlayer()
+        end
+    end
+    
+    if InputManager:WentKeyDown(InputDeviceKeys.IDK_ArrowLeft) then
+        if IngameSpectator:isEnabled() then
+            IngameSpectator:spectatePreviousPlayer()
         end
     end
 end
@@ -380,7 +397,8 @@ function kPMClient:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
         s_ScoreboardActive = true
         self.m_TabHeldTime = self.m_TabHeldTime + p_DeltaTime
         p_Cache:SetLevel(InputConceptIdentifiers.ConceptScoreboard, 0.0)
-    else
+    elseif s_ScoreboardActive == true then
+        print('Tab is released')
         self.m_TabHeldTime = 0.0
         s_ScoreboardActive = false
     end
@@ -955,8 +973,6 @@ function kPMClient:OnPlayerRespawn(p_Player)
     if p_Player.name == s_Player.name then
         --self.m_SpecCam:Disable()
         IngameSpectator:disable()
-
-        WebUI:ExecuteJS('SpectatorEnabled('.. tostring(false) .. ');')
     end
 end
 
@@ -1038,7 +1054,6 @@ function kPMClient:IsPlayerInsideThePlantZone()
 
     if s_Player.teamId == self.m_AttackersTeamId and self.m_BombSite == nil and self.m_BombLocation == nil then
         -- If the player is attacker and the bomb is not planted
-
         if p_Position:Distance(MapsConfig[s_LevelName]["PLANT_A"]["POS"].trans) <= MapsConfig[s_LevelName]["PLANT_A"]["RADIUS"] then
             return "A"
         end

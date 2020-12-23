@@ -70,4 +70,6 @@ kPMConfig =
     BombTime = 60.0,
     PlantTime = 5.0,
     DefuseTime = 5.0,
+
+    SpectatorEnabled = false,
 }

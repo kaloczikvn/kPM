@@ -17,11 +17,7 @@ function kPMServer:__init()
     self:RegisterEvents()
 
     -- Hold gamestate information
-    if kPMConfig.GameType == GameTypes.Public then
-        self.m_GameState = GameStates.Warmup
-    else
-        self.m_GameState = GameStates.None
-    end
+    self.m_GameState = GameStates.None
 
     -- Create our team information
     self.m_Attackers = Team(TeamId.Team2, "Attackers", "") -- RUS
