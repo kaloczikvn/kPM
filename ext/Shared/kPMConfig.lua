@@ -71,5 +71,5 @@ kPMConfig =
     PlantTime = 5.0,
     DefuseTime = 5.0,
 
-    SpectatorEnabled = false,
+    SpectatorEnabled = true,
 }

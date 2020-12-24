@@ -95,6 +95,7 @@ function kPMClient:RegisterEvents()
 
     -- Install input hooks
     self.m_InputPreUpdateHook = Hooks:Install("Input:PreUpdate", 1, self, self.OnInputPreUpdate)
+    self.m_UIInputConceptHook = Hooks:Install('UI:InputConceptEvent', 1, self, self.OnUIInputConceptEvent)
 
     -- Engine tick
     self.m_EngineUpdateEvent = Events:Subscribe("Engine:Update", self, self.OnEngineUpdate)
@@ -173,12 +174,6 @@ function kPMClient:OnSetSelectedTeam(p_Team)
         return
     end
 
-    if not s_LocalPlayer.alive and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
-        --[[self.m_SpecCam:Enable()
-        self.m_SpecCam:GetRandomSpecWhenTeamSwitch()]]
-        IngameSpectator:enable()
-    end
-
     if p_Team == 3 then -- auto-join
         local s_Attackers = PlayerManager:GetPlayersByTeam(self.m_AttackersTeamId)
         local s_Defenders = PlayerManager:GetPlayersByTeam(self.m_DefendersTeamId)
@@ -212,12 +207,27 @@ function kPMClient:OnSetSelectedLoadout(p_Data)
         return
     end
 
+    local s_LocalPlayer = PlayerManager:GetLocalPlayer()
+    if s_LocalPlayer == nil then
+        return
+    end
+
     -- If the player never spawned we should force him to pick a team and a loadout first
     if self.m_FirstSpawn == false then
         self.m_FirstSpawn = true
     end
 
     NetEvents:Send("kPM:PlayerSetSelectedKit", p_Data)
+
+    if not s_LocalPlayer.alive and (self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf) then
+        if not IngameSpectator:isEnabled() then
+            IngameSpectator:enable()
+        else
+            IngameSpectator:spectateNextPlayer()
+        end
+        
+        self:OnUpdateScoreboard(s_LocalPlayer)
+    end
 end
 
 -- ==========
@@ -329,6 +339,27 @@ function kPMClient:OnUpdateInput(p_DeltaTime)
     end
 end
 
+function kPMClient:OnUIInputConceptEvent(p_Hook, p_EventType, p_Action)    
+    if p_Action == UIInputAction.UIInputAction_Tab then
+		local s_Player = PlayerManager:GetLocalPlayer()
+		if s_Player ~= nil then
+            if p_EventType == UIInputActionEventType.UIInputActionEventType_Pressed then
+                if not self.m_ScoreboardActive then
+                    self.m_ScoreboardActive = true
+                    self:OnUpdateScoreboard(s_Player)
+                    WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', true) .. ");")
+                end
+            else
+                if self.m_ScoreboardActive then
+                    self.m_ScoreboardActive = false
+                    WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', false) .. ");")
+                end
+            end
+			p_Hook:Pass(UIInputAction.UIInputAction_None, p_EventType)
+		end
+	end
+end
+
 function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
     -- Validate our cache
     if p_Cache == nil then
@@ -342,8 +373,6 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
         return
     end
 
-    -- Tab held or not
-    self:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
     self:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
 
     -- Check to see if we are in the warmup state to get rup status
@@ -373,53 +402,6 @@ function kPMClient:OnInputPreUpdate(p_Hook, p_Cache, p_DeltaTime)
         else
             WebUI:ExecuteJS("RupInteractProgress(" .. tostring(self.m_RupHeldTime) ..", " .. tostring(kPMConfig.MaxReadyUpTime) .. ");")
         end
-    end
-
-    -- Update the freecam
-    --[[if self.m_SpecCam ~= nil then
-        self.m_SpecCam:OnUpdateInputHook(p_Hook, p_Cache, p_DeltaTime)
-    end]]
-end
-
-function kPMClient:IsTabHeld(p_Hook, p_Cache, p_DeltaTime)
-    -- Get the interact level
-    local s_InteractLevel = p_Cache:GetLevel(InputConceptIdentifiers.ConceptScoreboard)
-
-    local s_ScoreboardActive = self.m_ScoreboardActive
-
-    local s_Player = PlayerManager:GetLocalPlayer()
-    if s_Player == nil then
-        return
-    end
-
-    -- If the player is holding the interact key then update our variables and clear it for the next frame
-    if s_InteractLevel > 0.0 then
-        s_ScoreboardActive = true
-        self.m_TabHeldTime = self.m_TabHeldTime + p_DeltaTime
-        p_Cache:SetLevel(InputConceptIdentifiers.ConceptScoreboard, 0.0)
-    elseif s_ScoreboardActive == true then
-        print('Tab is released')
-        self.m_TabHeldTime = 0.0
-        s_ScoreboardActive = false
-    end
-
-    if self.m_TabHeldTime >= 3.0 then
-        if s_ScoreboardActive == true then
-            self:OnUpdateScoreboard(s_Player)
-        end
-
-        -- Reset our timer
-        self.m_TabHeldTime = 0.0
-    end
-
-    if self.m_ScoreboardActive ~= s_ScoreboardActive then
-        self.m_ScoreboardActive = s_ScoreboardActive
-
-        if s_ScoreboardActive == true then
-            self:OnUpdateScoreboard(s_Player)
-        end
-
-        WebUI:ExecuteJS("OpenCloseScoreboard(" .. string.format('%s', s_ScoreboardActive) .. ");")
     end
 end
 
@@ -501,9 +483,18 @@ function kPMClient:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
     end
 end
 
-
 function kPMClient:OnEngineUpdate(p_DeltaTime, p_SimulationDeltaTime)
-    -- TODO: Implement time related functionaity
+    if self.m_TabHeldTime >= 3.0 then
+        if self.m_ScoreboardActive then
+            local s_Player = PlayerManager:GetLocalPlayer()
+            if s_Player ~= nil then
+                self:OnUpdateScoreboard(s_Player)
+            end
+        end
+        self.m_TabHeldTime = 0.0
+    end
+
+    self.m_TabHeldTime = self.m_TabHeldTime + p_DeltaTime
 end
 
 function kPMClient:OnRupStateChanged(p_WaitingOnPlayers, p_LocalRupStatus)

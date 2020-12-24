@@ -217,6 +217,14 @@ function kPMServer:OnPlayerConnected(p_Player)
 
     -- Send out the gametype if he connects or reconnects
     NetEvents:SendTo("kPM:GameTypeChanged", p_Player, kPMConfig.GameType)
+
+    -- Send out the teams if he connects or reconnects
+    NetEvents:SendTo("kPM:UpdateTeams", p_Player, self.m_Attackers:GetTeamId(), self.m_Defenders:GetTeamId())
+
+    -- Send out the timer if its mid round
+    if self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf then
+        self:SetClientTimer(kPMConfig.MaxRoundTime - self.m_Match.m_UpdateTicks[self.m_GameState], p_Player)
+    end
 end
 
 function kPMServer:OnPlayerLeft(p_Player)
@@ -477,13 +485,17 @@ function kPMServer:ChangeGameState(p_GameState)
     NetEvents:Broadcast("kPM:GameStateChanged", s_OldGameState, p_GameState)
 end
 
-function kPMServer:SetClientTimer(p_Time)
+function kPMServer:SetClientTimer(p_Time, p_Player)
     if p_Time == nil then
         print("err: no time to send to the clients")
         return
     end
 
-    NetEvents:Broadcast("kPM:StartWebUITimer", p_Time)
+    if p_Player ~= nil then
+        NetEvents:SendTo("kPM:StartWebUITimer", p_Player, p_Time)
+    else
+        NetEvents:Broadcast("kPM:StartWebUITimer", p_Time)
+    end
 end
 
 function kPMServer:SetRoundEndInfoBox(p_WinnerTeamId)
