@@ -9,6 +9,7 @@ export interface Player {
     isDead: boolean;
     isReady: boolean;
     team?: Teams;
+    kit?: string;
 };
 
 export interface Players {

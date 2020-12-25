@@ -6,9 +6,12 @@ import { useTimer } from "react-compound-timer/build/hook/useTimer";
 import {  Player, Players } from "./helpers/Player";
 import { Teams } from "./helpers/Teams";
 
-
 import skull from './assets/img/human-skull.svg';
-import like from './assets/img/helmet.svg';
+import assault from './assets/img/helmet.svg';
+import specops from './assets/img/hospital-symbol.svg';
+import demolition from './assets/img/round-bomb.svg';
+import sniper from './assets/img/target.svg';
+
 
 import './Header.scss';
 
@@ -47,6 +50,34 @@ const Header: React.FC<Props> = ({
 
     const { value, controls: { setTime, reset, start }} = useTimer({ initialTime: 0, direction: "backward", startImmediately: false });
 
+    const getPlayerIcon = (player: Player) => {
+        if (player.isDead) {
+            return (
+                <img src={skull} alt="Dead" />
+            );
+        } else {
+            switch (player.kit) {
+                case 'SpecOps':
+                    return (
+                        <img src={specops} alt="SpecOps" />
+                    );
+                case 'Demolition':
+                    return (
+                        <img src={demolition} alt="Demolition" />
+                    );
+                case 'Sniper':
+                    return (
+                        <img src={sniper} alt="Sniper" />
+                    );
+                case 'Assault':
+                default:
+                    return (
+                        <img src={assault} alt="Assault" />
+                    );
+            }
+        };
+    }
+
     return (
         <>
             <div id="promodHeader">
@@ -70,11 +101,7 @@ const Header: React.FC<Props> = ({
                             <>
                                 {players[Teams.Attackers].map((player: Player, index: number) => (
                                     <div key={index} className={"playerIcon " + (player.isDead?'isDead':'isAlive') + " isAttacker"}>
-                                        {player.isDead ?
-                                            <img src={skull} alt="Dead" />
-                                        :
-                                            <img src={like} alt="Alive" />
-                                        }
+                                        {getPlayerIcon(player)}
                                     </div>
                                 ))}
                             </>
@@ -125,11 +152,7 @@ const Header: React.FC<Props> = ({
                             <>
                                 {players[Teams.Defenders].map((player: Player, index: number) => (
                                     <div key={index} className={"playerIcon " + (player.isDead?'isDead':'isAlive') + " isDefender"}>
-                                        {player.isDead ?
-                                            <img src={skull} alt="Dead" />
-                                        :
-                                            <img src={like} alt="Alive" />
-                                        }
+                                        {getPlayerIcon(player)}
                                     </div>
                                 ))}
                             </>

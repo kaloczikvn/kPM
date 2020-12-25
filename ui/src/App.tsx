@@ -210,6 +210,7 @@ const App: React.FC = () => {
         isDead: false,
         isReady: false,
         team: Teams.None,
+        kit: 'Assault',
     });
 
     window.UpdatePlayers = function (p_Players: any, p_ClientPlayer: any) {
@@ -232,6 +233,7 @@ const App: React.FC = () => {
                 isDead: (Math.random() < 0.5),
                 isReady: (Math.random() < 0.5),
                 team: Teams.None,
+                kit: 'Assault',
             });
         }
 

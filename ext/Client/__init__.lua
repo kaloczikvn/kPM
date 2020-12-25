@@ -60,6 +60,8 @@ function kPMClient:__init()
     self.m_AlarmEntity = nil
     self.m_PlantSent = false
 
+    self.m_PlayerClasses = { }
+
     -- Start vision (black and white)
     self.m_StatVision = StratVision()
 end
@@ -152,6 +154,8 @@ function kPMClient:RegisterEvents()
 
     self.m_DisablePlayerInputsEvent = NetEvents:Subscribe("kPM:DisablePlayerInputs", self, self.OnDisablePlayerInputs)
     self.m_EnablePlayerInputsEvent = NetEvents:Subscribe("kPM:EnablePlayerInputs", self, self.OnEnablePlayerInputs)
+
+    self.m_UpdatePlayerLoadoutEvent = NetEvents:Subscribe("kPM:UpdatePlayerLoadout", self, self.OnUpdatePlayerLoadout)
 
     -- Cleanup Events
     self.m_CleanupEvent = NetEvents:Subscribe("kPM:Cleanup", self, self.OnCleanup)
@@ -627,6 +631,7 @@ function kPMClient:OnUpdateScoreboard(p_Player)
             ["isDead"] = not l_Player.alive,
             ["isReady"] = l_Ready,
             ["team"] = l_Player.teamId,
+            ["kit"] = self:GetKit(l_Player),
         })
     end
 
@@ -650,6 +655,7 @@ function kPMClient:OnUpdateScoreboard(p_Player)
             ["isDead"] = not l_Player.alive,
             ["isReady"] = l_Ready,
             ["team"] = l_Player.teamId,
+            ["kit"] = self:GetKit(l_Player),
         })
     end
 
@@ -672,6 +678,7 @@ function kPMClient:OnUpdateScoreboard(p_Player)
         ["isDead"] = not p_Player.alive,
         ["isReady"] = l_Ready,
         ["team"] = p_Player.teamId,
+        ["kit"] = self:GetKit(p_Player),
     }
 
     WebUI:ExecuteJS(string.format("UpdatePlayers(%s, %s);", json.encode(l_PlayersObject), json.encode(l_PlayerClient)))
@@ -1109,6 +1116,34 @@ function kPMClient:EnablePlayerInputs()
             s_Player:EnableInput(EntryInputActionEnum.EIASprint, true)
             self.m_PlayerInputs = true
         end
+    end
+end
+
+function kPMClient:OnUpdatePlayerLoadout(p_PlayerId, p_Class)
+    if p_PlayerId == nil then
+        return
+    end
+
+    if p_Class == nil then
+        return
+    end
+
+    if self.m_PlayerClasses[p_PlayerId] == nil or self.m_PlayerClasses[p_PlayerId] ~= p_Class then
+        self.m_PlayerClasses[p_PlayerId] = p_Class
+    end
+end
+
+function kPMClient:GetKit(p_Player)
+    if p_Player == nil then
+        return 'Assault'
+    end
+
+    local s_PlayerId = p_Player.id
+
+    if self.m_PlayerClasses[s_PlayerId] == nil then
+        return 'Assault'
+    else
+        return self.m_PlayerClasses[s_PlayerId]
     end
 end
 

@@ -71,6 +71,9 @@ function LoadoutManager:SetPlayerLoadout(p_Player, p_Data)
         }
     }
 
+    print("Player id: "..p_Player.id)
+    NetEvents:Broadcast("kPM:UpdatePlayerLoadout", p_Player.id, p_Data["class"])
+
     print("info: loadout saved for player: " .. p_Player.name)
 end
 
@@ -119,6 +122,8 @@ function LoadoutManager:SetDefaultLoadout(p_Player)
             ResourceManager:SearchForDataContainer("Weapons/AK74M/U_AK74M_Flashsuppressor")
         }
     }
+
+    NetEvents:Broadcast("kPM:UpdatePlayerLoadout", p_Player.id, "Assault")
 
     print("info: loadout saved for player: " .. p_Player.name)
 end
