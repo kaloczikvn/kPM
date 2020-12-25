@@ -53,6 +53,7 @@ function kPMServer:RegisterEvents()
 
     self.m_PlayerJoiningEvent = Events:Subscribe("Player:Joining", self, self.OnPlayerJoining)
     self.m_PlayerLeaveEvent = Events:Subscribe("Player:Left", self, self.OnPlayerLeft)
+    self.m_PlayerKilledEvent = Events:Subscribe("Player:Killed", self, self.OnPlayerKilled)
 
     -- Team management
     self.m_PlayerFindBestSquadHook = Hooks:Install("Player:FindBestSquad", 1, self, self.OnPlayerFindBestSquad)
@@ -231,12 +232,23 @@ function kPMServer:OnPlayerLeft(p_Player)
     print("info: player " .. p_Player.name .. " has left the server")
 end
 
+function kPMServer:OnPlayerKilled(p_Player)
+    if self.m_GameState == GameStates.Warmup or self.m_GameState == GameStates.None then
+        self.m_Match:AddPlayerToSpawnQueue(
+            p_Player, 
+            self.m_Match:GetRandomSpawnpoint(p_Player), 
+            CharacterPoseType.CharacterPoseType_Stand, 
+            self:GetSoldierBlueprint(), 
+            false,
+            self.m_LoadoutManager:GetPlayerLoadout(p_Player)
+        )
+    end
+end
+
 function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
     if p_Player == nil or p_Team == nil then
         return
     end
-    
-    local l_SoldierBlueprint = ResourceManager:SearchForDataContainer('Characters/Soldiers/MpSoldier')
 
     if kPMConfig.GameType == GameTypes.Public then
         if self.m_GameState == GameStates.Strat or
@@ -253,7 +265,7 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
                     p_Player, 
                     self.m_Match:GetRandomSpawnpoint(p_Player), 
                     CharacterPoseType.CharacterPoseType_Stand, 
-                    l_SoldierBlueprint, 
+                    self:GetSoldierBlueprint(), 
                     false,
                     self.m_LoadoutManager:GetPlayerLoadout(p_Player)
                 )
@@ -278,7 +290,7 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
                     p_Player, 
                     self.m_Match:GetRandomSpawnpoint(p_Player), 
                     CharacterPoseType.CharacterPoseType_Stand, 
-                    l_SoldierBlueprint, 
+                    s_SoldierBlueprint, 
                     false,
                     self.m_LoadoutManager:GetPlayerLoadout(p_Player)
                 )
@@ -303,8 +315,6 @@ function kPMServer:OnPlayerSetSelectedKit(p_Player, p_Data)
 
     if self.m_GameState == GameStates.Warmup or self.m_GameState == GameStates.None or self.m_GameState == GameStates.Strat then
         -- If the current gamestate is Warmup or None we can switch kit instantly
-        local l_SoldierBlueprint = ResourceManager:SearchForDataContainer('Characters/Soldiers/MpSoldier')
-
         if p_Player.soldier ~= nil then
             self.m_Match:KillPlayer(p_Player, false)
         end
@@ -313,11 +323,15 @@ function kPMServer:OnPlayerSetSelectedKit(p_Player, p_Data)
             p_Player, 
             self.m_Match:GetRandomSpawnpoint(p_Player), 
             CharacterPoseType.CharacterPoseType_Stand, 
-            l_SoldierBlueprint, 
+            self:GetSoldierBlueprint(),
             false,
             self.m_LoadoutManager:GetPlayerLoadout(p_Player)
         )
     end
+end
+
+function kPMServer:GetSoldierBlueprint()
+    return ResourceManager:SearchForDataContainer('Characters/Soldiers/MpSoldier')
 end
 
 function kPMServer:OnPlayerFindBestSquad(p_Hook, p_Player)
