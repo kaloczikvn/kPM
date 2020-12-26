@@ -146,9 +146,25 @@ function kPMShared:OnPartitionLoaded(p_Partition)
                 l_EntityVoiceOverInfo.voiceOverType = nil
             end
         end
-    end
 
-    for _, l_Instance in pairs(p_Partition.instances) do
+        if l_Instance.instanceGuid == Guid('5FA66B8C-BE0E-3758-7DE9-533EA42F5364') then
+			-- Get rid of the PreRoundEntity. We don't need preround in this gamemode.
+			local bp = LogicPrefabBlueprint(l_Instance)
+			bp:MakeWritable()
+
+			for i = #bp.objects, 1, -1 do
+				if bp.objects[i]:Is('PreRoundEntityData') then
+					bp.objects:erase(i)
+				end
+			end
+
+			for i = #bp.eventConnections, 1, -1 do
+				if bp.eventConnections[i].source:Is('PreRoundEntityData') or bp.eventConnections[i].target:Is('PreRoundEntityData') then
+					bp.eventConnections:erase(i)
+				end
+			end
+		end
+
         if l_Instance.instanceGuid == self.m_CustomMapMarkerEntityAGuid or l_Instance.instanceGuid == self.m_CustomMapMarkerEntityBGuid then
 			return
 		end
