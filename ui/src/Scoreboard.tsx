@@ -1,5 +1,6 @@
 import React from "react";
 import ScoreboardTeam from "./components/ScoreboardTeam";
+import { useLang } from "./context/Lang";
 import { GameStates } from "./helpers/GameStates";
 import { Players } from "./helpers/Player";
 import { RoundInfo } from "./helpers/RoundInfo";
@@ -19,6 +20,8 @@ interface Props {
 }
 
 const Scoreboard: React.FC<Props> = ({ showScoreboard, teamAttackersScore, teamDefendersScore, players, gameState, round, maxRounds, roundsList }) => {
+    const { t } = useLang();
+    
     const rounds = [];
     for (let i = 0; i < maxRounds; i++) {
         if (maxRounds / 2 === i) {
@@ -42,10 +45,7 @@ const Scoreboard: React.FC<Props> = ({ showScoreboard, teamAttackersScore, teamD
                 <div id="inGameScoreboard" className="fadeInBottom">
                     <ScoreboardTeam team={Teams.Attackers} score={teamAttackersScore} players={players[Teams.Attackers]} gameState={gameState} />
                     <div className="roundCounter">
-                        Round {round??0} / {maxRounds??0}
-                        {/*<div className="roundList">
-                            {rounds}
-                        </div>*/}
+                        {t("round")} {round??0} / {maxRounds??0}
                     </div>
                     <ScoreboardTeam team={Teams.Defenders} score={teamDefendersScore} players={players[Teams.Defenders]} gameState={gameState} />
                 </div>

@@ -288,6 +288,7 @@ function kPMClient:OnLevelLoaded()
     NetEvents:Send("kPM:PlayerConnected")
     WebUI:ExecuteJS("OpenCloseTeamMenu(true);")
     WebUI:ExecuteJS("RoundCount(" .. kPMConfig.MatchDefaultRounds .. ");")
+    WebUI:ExecuteJS("SetLanguage('" .. kPMConfig.ServerLanguage .. "');")
 end
 
 function kPMClient:OnLevelLoadResources()

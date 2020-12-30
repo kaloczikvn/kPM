@@ -5,7 +5,7 @@ export enum GameTypes {
 }
 
 export var GameTypesString = {
-    [GameTypes.Public]: 'Public',
-    [GameTypes.Comp]: 'Competitive',
-    [GameTypes.Strat]: 'Strat',
+    [GameTypes.Public]: 'public',
+    [GameTypes.Comp]: 'competitive',
+    [GameTypes.Strat]: 'strat',
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import plantAudio from '../assets/audio/alarm.wav';
+import { useLang } from "../context/Lang";
 
 interface Props {
     bombSite: string | null;
@@ -8,6 +9,8 @@ interface Props {
 }
 
 const BombPlantInfoBox: React.FC<Props> = ({ bombSite, afterInterval }) => {
+    const { t } = useLang();
+    
     /*const [audio] = useState(new Audio(plantAudio));
     const [playing, setPlaying] = useState<boolean>((bombSite !== null));
 
@@ -42,8 +45,8 @@ const BombPlantInfoBox: React.FC<Props> = ({ bombSite, afterInterval }) => {
         <>
             {bombSite !== null &&
                 <div className={"roundEndInfoBox gameEndInfoBox fadeInTop defenders"}>
-                    <h2>Bomb planted on</h2>
-                    <h1>{bombSite} site</h1>
+                    <h2>{t('bombPlantedOn')}</h2>
+                    <h1>{bombSite} {t('site')}</h1>
                 </div>
             }
         </>

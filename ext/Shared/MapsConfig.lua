@@ -175,10 +175,7 @@ MapsConfig =
             RADIUS = 5,
         },
 
-        EFFECTS_WORLD_PART_DATA = {
-            PARTITION = Guid('98A6707B-69F3-4411-8190-174736E7D538'),
-            INSTANCE = Guid('EC9503C5-B06A-4990-AD0A-583F857A35D0'),
-        },
+        EFFECTS_WORLD_PART_DATA = nil,
 
         CAMERA_ENTITY_DATA = {
             PARTITION = Guid('676C0FD7-EA75-4F5D-8764-BB076F6F3E11'),
@@ -235,7 +232,10 @@ MapsConfig =
             RADIUS = 5,
         },
 
-        EFFECTS_WORLD_PART_DATA = nil,
+        EFFECTS_WORLD_PART_DATA = {
+            PARTITION = Guid('98A6707B-69F3-4411-8190-174736E7D538'),
+            INSTANCE = Guid('EC9503C5-B06A-4990-AD0A-583F857A35D0'),
+        },
 
         CAMERA_ENTITY_DATA = {
             PARTITION = Guid('FAD987C1-7D2A-11E0-B283-C22E2A7B7393'),

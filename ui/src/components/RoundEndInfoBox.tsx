@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLang } from "../context/Lang";
 import { Teams } from "../helpers/Teams";
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 const RoundEndInfoBox: React.FC<Props> = ({ roundWon, winningTeam, afterDisaper }) => {
+    const { t } = useLang();
     const [show, setShow] = useState<boolean>(true);
 
     useEffect(() => {
@@ -25,8 +27,8 @@ const RoundEndInfoBox: React.FC<Props> = ({ roundWon, winningTeam, afterDisaper 
         <>
             {show &&
                 <div className={"roundEndInfoBox fadeInTop " + ((winningTeam === Teams.Attackers) ? 'defenders' : 'attackers')}>
-                    <h2>Round {roundWon ? 'Won' : 'Lost'}</h2>
-                    <h1>{(winningTeam === Teams.Attackers) ? 'Attackers' : 'Defenders'} won</h1>
+                    <h2>{t('round')} {roundWon ? t('won') : t('lost')}</h2>
+                    <h1>{(winningTeam === Teams.Attackers) ? t('attackers') : t('defenders')} {t('won')}</h1>
                 </div>
             }
         </>

@@ -72,4 +72,5 @@ kPMConfig =
     DefuseTime = 5.0,
 
     SpectatorEnabled = true,
+    ServerLanguage = "en",
 }

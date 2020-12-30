@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useLang } from "../context/Lang";
 import { Teams } from "../helpers/Teams";
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 const GameEndInfoBox: React.FC<Props> = ({ gameWon, winningTeam, afterInterval }) => {
+    const { t } = useLang();
+    
     useEffect(() => {
         const interval = setInterval(() => {
             afterInterval();
@@ -23,11 +26,11 @@ const GameEndInfoBox: React.FC<Props> = ({ gameWon, winningTeam, afterInterval }
                 {winningTeam !== null
                 ?
                     <>
-                        <h1>Your team {gameWon ? 'won' : 'lost'}</h1>
+                        <h1>{t('yourTeam')} {gameWon ? t('won') : t('lost')}</h1>
                     </>
                 :
                     <>
-                        <h1>Draw</h1>
+                        <h1>{t('draw')}</h1>
                     </>
                 }
             </div>

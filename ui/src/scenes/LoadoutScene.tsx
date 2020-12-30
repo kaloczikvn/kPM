@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import PromodSelect from "../components/PromodSelect";
 import Title from "../components/Title";
+import { useLang } from "../context/Lang";
 import { Kits } from "../helpers/Kits";
 
 import './LoadoutScene.scss';
@@ -20,6 +21,8 @@ interface Props {
 }
 
 const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
+    const { t } = useLang();
+    
     const [currentLoadout, setCurrentLoadout] = useState<Loadout>({
         class: null,
         primary: null,
@@ -175,7 +178,7 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
 
         return (
             <>
-                <h3>{name ?? ''}</h3>
+                <h3>{t(name).toString() ?? ''}</h3>
                 <PromodSelect 
                     type={name}
                     options={options} 
@@ -213,7 +216,7 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
 
         return (
             <div className="attachment">
-                <h3>{name}</h3>
+                <h3>{t(name).toString() ?? ''}</h3>
                 <PromodSelect 
                     type={name}
                     options={getAttachmentOptions(name)} 
@@ -230,12 +233,12 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
         <>
             {show &&
                 <div id="pageLoadout" className="page">
-                    <Title text="Edit Loadouts" />
+                    <Title text={t("editLoadouts").toString()} />
                     <div>
                         <div className="classesList">
                             {Object.keys(Kits).map((val: string, key: number) =>
                                 <button key={key} onClick={() => onClickSelectedClass(key)} className={"btn border-btn " + (selectedClass === key ? 'secondary' : '')}>
-                                    {Kits[key].Name}
+                                    {t(Kits[key].Name)}
                                 </button>
                             )}
                         </div>
@@ -250,26 +253,26 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
                                                     {getWeaponSlot("Primary Weapon", Kits[key]["Weapons"].Primary, Kits[key]["Weapons"].defaultPrimary)}
 
                                                     <div className="attachments">
-                                                        {getWeaponAttachmentSlot("Sights")}
-                                                        {getWeaponAttachmentSlot("Primary")}
-                                                        {getWeaponAttachmentSlot("Secondary")}
+                                                        {getWeaponAttachmentSlot('Sights')}
+                                                        {/*getWeaponAttachmentSlot("Primary")*/}
+                                                        {getWeaponAttachmentSlot('Secondary')}
                                                     </div>
 
-                                                    {getWeaponSlot("Secondary Weapon", Kits[key]["Weapons"].Secondary, Kits[selectedClass]["Weapons"].defaultSecondary)}
-                                                    {getWeaponSlot("Tactical", Kits[key]["Weapons"].Tactical, Kits[selectedClass]["Weapons"].defaultTactical)}
-                                                    {getWeaponSlot("Lethal", Kits[key]["Weapons"].Lethal, Kits[selectedClass]["Weapons"].defaultLethal)}
+                                                    {getWeaponSlot('Secondary Weapon', Kits[key]["Weapons"].Secondary, Kits[selectedClass]["Weapons"].defaultSecondary)}
+                                                    {getWeaponSlot('Tactical', Kits[key]["Weapons"].Tactical, Kits[selectedClass]["Weapons"].defaultTactical)}
+                                                    {getWeaponSlot('Lethal', Kits[key]["Weapons"].Lethal, Kits[selectedClass]["Weapons"].defaultLethal)}
                                                 </>
                                             }
                                         </div>
                                     )}
                                     <button className="btn border-btn primary" onClick={doneLoadout}>
-                                        Start
+                                        {t('start')}
                                     </button>
                                 </div>
                             </>
                         }
                     </div>
-                    <Title text="F10 - To close Loadouts window" bottom={true} />
+                    <Title text={t('loadoutClose').toString()} bottom={true} />
                 </div>
             }
         </>

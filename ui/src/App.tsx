@@ -3,26 +3,29 @@ import React, { useState } from "react";
 import Header from "./Header";
 import Scoreboard from "./Scoreboard";
 
-import RoundEndInfoBox from "./components/RoundEndInfoBox";
-
 import TeamsScene from "./scenes/TeamsScene";
 import WarmupScene from "./scenes/WarmupScene";
-import KnifeRoundScene from "./scenes/KnifeRoundScene";
 import LoadoutScene from "./scenes/LoadoutScene";
 
 import { GameStates } from './helpers/GameStates';
 import { GameTypes } from './helpers/GameTypes';
 import { Teams } from "./helpers/Teams";
 import { Player, Players } from "./helpers/Player";
+import { RoundInfo } from "./helpers/RoundInfo";
 
 import GameEndInfoBox from "./components/GameEndInfoBox";
 import BombPlantInfoBox from "./components/BombPlantInfoBox";
 import PlantOrDefuseProgress from "./components/PlantOrDefuseProgress";
+import RoundEndInfoBox from "./components/RoundEndInfoBox";
+import Spectator from "./components/Spectator";
+
+import { LangContext } from "./context/Lang";
+
+import translations from './translations';
 
 import './Animations.scss';
 import './Global.scss';
-import Spectator from "./components/Spectator";
-import { RoundInfo } from "./helpers/RoundInfo";
+
 
 const App: React.FC = () => {
     /*
@@ -290,13 +293,11 @@ const App: React.FC = () => {
 
     const [spectating, setSpectating] = useState<boolean>(false);
     window.SpectatorEnabled = function(p_Enabled: boolean) {
-        console.log('SpectatorEnabled ' + p_Enabled);
         setSpectating(p_Enabled);
     }
 
     const [spectatorTarget, setSpectatorTarget] = useState<string>("");
     window.SpectatorTarget = function(p_TargetName: string) {
-        console.log('SpectatorTarget ' + p_TargetName);
         setSpectatorTarget(p_TargetName);
     }
 
@@ -309,129 +310,141 @@ const App: React.FC = () => {
             case GameStates.WarmupToKnife:
             case GameStates.Warmup:
                 return <WarmupScene rupProgress={rupProgress} players={players} clientPlayer={clientPlayer} />;
+        }
+    }
 
-            case GameStates.KnifeRound:
-                return <KnifeRoundScene />;
+    const [langugage, setLangugage] = useState<string>('en');
+    const t = (key: string) => {
+        if (Object.keys(translations[langugage]).length > 0 && translations[langugage][key]) {
+            return translations[langugage][key];
+        } else {
+            if (translations['en'][key] !== undefined) {
+                return translations['en'][key];
+            } else {
+                return '';
+            }
+        }
+    }
 
-            /*case GameStates.EndGame:
-                return <EndgameScene
-                    roundWon={roundWon}
-                    winningTeam={winningTeam}
-                    teamAttackersScore={teamAttackersScore}
-                    teamDefendersScore={teamDefendersScore}
-                />;*/
+    window.SetLanguage = function(p_Lang: string) {
+        if(Object.keys(translations[p_Lang]).length > 0) {
+            setLangugage(p_Lang);
         }
     }
 
     return (
-        <div className="App">
-            
-            {debugMode &&
-                <style dangerouslySetInnerHTML={{__html: `
-                    body {
-                        background: #8e8e8e;
-                    }
-
-                    #debug {
-                        display: block !important;
-                        opacity: 0.1;
-                    }
-                `}} />
-            }
-            
-            <div id="debug" className="global">
-                <button onClick={() => setScene(GameStates.Warmup)}>Warmup</button>
-                {/*<button onClick={() => setScene(GameStates.EndGame)}>EndGame</button>*/}
-                <button onClick={() => setScene(GameStates.Strat)}>Strat</button>
-                <button onClick={() => setShowHud(prevState => !prevState)}>ShowHeader On / Off</button>
-                <button onClick={() => setShowScoreboard(prevState => !prevState)}>Scoreboard On / Off</button>
-                <button onClick={() => SetDummyPlayers()}>Set dummy players</button>
-                <br />
-                <button onClick={() => setShowRoundEndInfoBox(prevState => !prevState)}>RoundEndInfo On / Off</button>
-                <button onClick={() => setGameWon(true)}>setGameWon</button>
-                <button onClick={() => setGameWinningTeam(Teams.Attackers)}>Attackers won the game</button>
-                <button onClick={() => setBombPlantedOn("B")}>Set bomb planted</button>
-                <br />
-                <button onClick={() => setRoundWon(true)}>Win</button>
-                <button onClick={() => setRoundWon(false)}>Lose</button>
-                <button onClick={() => setWinningTeam(Teams.Attackers)}>Attackers Win</button>
-                <button onClick={() => setWinningTeam(Teams.Defenders)}>Defenders Win</button>
-                <button onClick={() => setTeamAttackersScore(prevState => prevState + 1)}>Attackers +1</button>
-                <button onClick={() => setTeamDefendersScore(prevState => prevState + 1)}>Defenders +1</button>
-            </div>
-
-            <div className="window">
-                <Header
-                    showHud={showHud}
-                    currentScene={scene}
-                    teamAttackersScore={teamAttackersScore}
-                    teamDefendersScore={teamDefendersScore}
-                    teamAttackersClan=""
-                    teamDefendersClan=""
-                    round={round}
-                    gameType={gameType}
-                    bombPlantedOn={bombPlantedOn}
-                    maxRounds={maxRounds}
-                    players={players}
-                />
-                <GameStatesPage />
-                <TeamsScene
-                    show={showTeamsPage}
-                    selectedTeam={selectedTeam}
-                    setSelectedTeam={(team: Teams) => setTeam(team)}
-                    gameType={gameType}
-                />
-                <LoadoutScene
-                    show={showLoadoutPage}
-                    setShowLoadoutPage={(show) => setShowLoadoutPage(show)}
-                />
-                <Scoreboard 
-                    showScoreboard={showScoreboard}
-                    teamAttackersScore={teamAttackersScore}
-                    teamDefendersScore={teamDefendersScore}
-                    players={players}
-                    gameState={scene}
-                    round={round}
-                    maxRounds={maxRounds}
-                    roundsList={roundsList}
-                />
-                <PlantOrDefuseProgress 
-                    plantProgress={plantProgress}
-                    plantOrDefuse={plantOrDefuse}
-                />
-                <Spectator
-                    spectating={spectating}
-                    spectatorTarget={spectatorTarget}
-                />
+        <LangContext.Provider value={{ t }}>
+            <div className="App">
                 
-                {bombPlanted !== null &&
-                    <BombPlantInfoBox bombSite={bombPlanted} afterInterval={() => setBombPlanted(null)} />
-                }
-
-                {gameWon !== null 
-                ?
-                    <GameEndInfoBox
-                        gameWon={gameWon}
-                        winningTeam={gameWinningTeam}
-                        afterInterval={() => {
-                            setShowRoundEndInfoBox(false);
-                            setGameWon(null);
-                            setGameWinningTeam(null);
-                        }}
-                        />
-                :
-                    <>
-                        {showRoundEndInfoBox &&
-                            <RoundEndInfoBox 
-                                roundWon={roundWon}
-                                winningTeam={winningTeam}
-                                afterDisaper={() => setShowRoundEndInfoBox(false)}
-                                />
+                {debugMode &&
+                    <style dangerouslySetInnerHTML={{__html: `
+                        body {
+                            background: #8e8e8e;
                         }
-                    </>
+
+                        #debug {
+                            display: block !important;
+                            opacity: 0.1;
+                        }
+                    `}} />
                 }
+                
+                <div id="debug" className="global">
+                    <button onClick={() => setScene(GameStates.Warmup)}>Warmup</button>
+                    {/*<button onClick={() => setScene(GameStates.EndGame)}>EndGame</button>*/}
+                    <button onClick={() => setScene(GameStates.Strat)}>Strat</button>
+                    <button onClick={() => setShowHud(prevState => !prevState)}>ShowHeader On / Off</button>
+                    <button onClick={() => setShowScoreboard(prevState => !prevState)}>Scoreboard On / Off</button>
+                    <button onClick={() => SetDummyPlayers()}>Set dummy players</button>
+                    <br />
+                    <button onClick={() => setShowRoundEndInfoBox(prevState => !prevState)}>RoundEndInfo On / Off</button>
+                    <button onClick={() => setGameWon(true)}>setGameWon</button>
+                    <button onClick={() => setGameWinningTeam(Teams.Attackers)}>Attackers won the game</button>
+                    <button onClick={() => setBombPlantedOn("B")}>Set bomb planted</button>
+                    <br />
+                    <button onClick={() => setRoundWon(true)}>Win</button>
+                    <button onClick={() => setRoundWon(false)}>Lose</button>
+                    <button onClick={() => setWinningTeam(Teams.Attackers)}>Attackers Win</button>
+                    <button onClick={() => setWinningTeam(Teams.Defenders)}>Defenders Win</button>
+                    <button onClick={() => setTeamAttackersScore(prevState => prevState + 1)}>Attackers +1</button>
+                    <button onClick={() => setTeamDefendersScore(prevState => prevState + 1)}>Defenders +1</button>
+                </div>
+
+                <div className="window">
+                    <Header
+                        showHud={showHud}
+                        currentScene={scene}
+                        teamAttackersScore={teamAttackersScore}
+                        teamDefendersScore={teamDefendersScore}
+                        teamAttackersClan=""
+                        teamDefendersClan=""
+                        round={round}
+                        gameType={gameType}
+                        bombPlantedOn={bombPlantedOn}
+                        maxRounds={maxRounds}
+                        players={players}
+                    />
+                    <GameStatesPage />
+                    <TeamsScene
+                        show={showTeamsPage}
+                        selectedTeam={selectedTeam}
+                        setSelectedTeam={(team: Teams) => setTeam(team)}
+                        gameType={gameType}
+                        players={players}
+                        scene={scene}
+                    />
+                    <LoadoutScene
+                        show={showLoadoutPage}
+                        setShowLoadoutPage={(show) => setShowLoadoutPage(show)}
+                    />
+                    <Scoreboard 
+                        showScoreboard={showScoreboard}
+                        teamAttackersScore={teamAttackersScore}
+                        teamDefendersScore={teamDefendersScore}
+                        players={players}
+                        gameState={scene}
+                        round={round}
+                        maxRounds={maxRounds}
+                        roundsList={roundsList}
+                    />
+                    <PlantOrDefuseProgress 
+                        plantProgress={plantProgress}
+                        plantOrDefuse={plantOrDefuse}
+                    />
+                    <Spectator
+                        spectating={spectating}
+                        spectatorTarget={spectatorTarget}
+                    />
+                    
+                    {bombPlanted !== null &&
+                        <BombPlantInfoBox bombSite={bombPlanted} afterInterval={() => setBombPlanted(null)} />
+                    }
+
+                    {gameWon !== null 
+                    ?
+                        <GameEndInfoBox
+                            gameWon={gameWon}
+                            winningTeam={gameWinningTeam}
+                            afterInterval={() => {
+                                setShowRoundEndInfoBox(false);
+                                setGameWon(null);
+                                setGameWinningTeam(null);
+                            }}
+                            />
+                    :
+                        <>
+                            {showRoundEndInfoBox &&
+                                <RoundEndInfoBox 
+                                    roundWon={roundWon}
+                                    winningTeam={winningTeam}
+                                    afterDisaper={() => setShowRoundEndInfoBox(false)}
+                                    />
+                            }
+                        </>
+                    }
+                </div>
             </div>
-        </div>
+        </LangContext.Provider>
     );
 };
 
@@ -459,5 +472,7 @@ declare global {
         //Spectator
         SpectatorTarget: (p_TargetName: string) => void;
         SpectatorEnabled: (p_Enabled: boolean) => void;
+
+        SetLanguage: (p_Lang: string) => void;
     }
 }

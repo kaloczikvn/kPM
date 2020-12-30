@@ -7,7 +7,7 @@ export var Kits: any = [
             Primary: {
                 U_M16A4: Weapons.U_M16A4,
                 U_AK74M: Weapons.U_AK74M,
-                U_G36C: Weapons.U_G36C,
+                //U_G36C: Weapons.U_G36C,
             },
             Secondary: {
                 U_M9: Weapons.U_M9,
@@ -31,7 +31,7 @@ export var Kits: any = [
         Weapons: {
             Primary: {
                 U_AKS74u: Weapons.U_AKS74u,
-                U_F2000: Weapons.U_F2000,
+                U_MP5K: Weapons.U_MP5K,
             },
             Secondary: {
                 U_M9: Weapons.U_M9,

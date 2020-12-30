@@ -14,6 +14,7 @@ import sniper from './assets/img/target.svg';
 
 
 import './Header.scss';
+import { useLang } from "./context/Lang";
 
 interface Props {
     teamAttackersScore: number;
@@ -47,6 +48,8 @@ const Header: React.FC<Props> = ({
         start();
         reset();
     }
+
+    const { t } = useLang();
 
     const { value, controls: { setTime, reset, start }} = useTimer({ initialTime: 0, direction: "backward", startImmediately: false });
 
@@ -109,7 +112,6 @@ const Header: React.FC<Props> = ({
                     </div>
                     <div id="score">
                         <div id="scoreAttackers">
-                            {/*<span id="team">Attackers</span>*/}
                             <span className="points">{teamAttackersScore??0}</span>
                         </div>
                         <div id="roundTimer">
@@ -129,21 +131,20 @@ const Header: React.FC<Props> = ({
                                 {bombPlantedOn !== null 
                                 ?
                                     <>
-                                        Bomb on {bombPlantedOn}
+                                         {t('bombOn')} {bombPlantedOn}
                                     </>
                                 :
                                     <>
-                                        {GameStatesRoundString[currentScene].replace('{round}', ((round?.toString()??'1') + '/' + maxRounds))??''}
+                                        {t(GameStatesRoundString[currentScene]).toString().replace('{round}', ((round?.toString()??'1') + '/' + maxRounds))??''}
                                     </>
                                 }
                             </span>
 
                             <div className="gameTypeLabel">
-                                {GameTypesString[gameType]}
+                                {t(GameTypesString[gameType])}
                             </div>
                         </div>
                         <div id="scoreDefenders">
-                            {/*<span id="team">Defenders</span>*/}
                             <span className="points">{teamDefendersScore??0}</span>
                         </div>
                     </div>

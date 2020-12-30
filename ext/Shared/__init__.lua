@@ -2,6 +2,7 @@ class "kPMShared"
 
 require("__shared/MapsConfig")
 require("__shared/LevelNameHelper")
+require("__shared/WeaponModifier")
 require("__shared/Generators/MapMarkerEntityDataGenerator")
 
 function kPMShared:__init()
@@ -17,6 +18,9 @@ function kPMShared:__init()
 
     self.m_CustomMapMarkerEntityAGenerated = nil
     self.m_CustomMapMarkerEntityBGenerated = nil
+
+    self.m_SoldierWeaponBlueprints = { }
+    self.m_BulletEntityDatas = { }
 end
 
 function kPMShared:OnExtensionLoaded()
@@ -79,6 +83,20 @@ end
 
 function kPMShared:OnLevelLoaded(p_LevelName, p_GameMode)
     self:SpawnPlants()
+    
+    for i, l_Instance in pairs(self.m_SoldierWeaponBlueprints) do
+        WeaponModifier:ModifyWeaponInstance(l_Instance)
+    end
+    self.m_SoldierWeaponBlueprints = { }
+
+    local s_MaterialGrid = MaterialGridData(ResourceManager:SearchForDataContainer(SharedUtils:GetLevelName() .. "/MaterialGrid_Win32/Grid"))        
+    for i, l_Instance in pairs(self.m_BulletEntityDatas) do
+        if l_Instance.materialPair ~= nil and l_Instance.materialPair.physicsPropertyIndex ~= nil and s_MaterialGrid.materialIndexMap[l_Instance.materialPair.physicsPropertyIndex+1] ~= nil then
+            MaterialRelationDamageData(MaterialInteractionGridRow(s_MaterialGrid.interactionGrid[s_MaterialGrid.materialIndexMap[l_Instance.materialPair.physicsPropertyIndex+1]+1]).items[s_MaterialGrid.materialIndexMap[65+1]+1].physicsPropertyProperties[1]):MakeWritable()
+            MaterialRelationDamageData(MaterialInteractionGridRow(s_MaterialGrid.interactionGrid[s_MaterialGrid.materialIndexMap[l_Instance.materialPair.physicsPropertyIndex+1]+1]).items[s_MaterialGrid.materialIndexMap[65+1]+1].physicsPropertyProperties[1]).damageProtectionMultiplier = 3.0 -- head
+        end
+    end
+    self.m_BulletEntityDatas = { }
 end
 
 function kPMShared:OnPartitionLoaded(p_Partition)
@@ -140,11 +158,19 @@ function kPMShared:OnPartitionLoaded(p_Partition)
 
     for _, l_Instance in pairs(p_Partition.instances) do
         if l_Instance:Is('EntityVoiceOverInfo') then
-            if l_Instance ~= nil then
-                local l_EntityVoiceOverInfo = EntityVoiceOverInfo(l_Instance)
-                l_EntityVoiceOverInfo:MakeWritable()
-                l_EntityVoiceOverInfo.voiceOverType = nil
-            end
+            local l_EntityVoiceOverInfo = EntityVoiceOverInfo(l_Instance)
+            l_EntityVoiceOverInfo:MakeWritable()
+            l_EntityVoiceOverInfo.voiceOverType = nil
+        end
+
+        if l_Instance:Is('SoldierWeaponBlueprint') then
+            local s_SoldierWeaponBlueprint = SoldierWeaponBlueprint(l_Instance)
+            table.insert(self.m_SoldierWeaponBlueprints, s_SoldierWeaponBlueprint)
+        end
+
+        if l_Instance:Is('BulletEntityData') then
+            local s_BulletEntityData = BulletEntityData(l_Instance)
+            table.insert(self.m_BulletEntityDatas, s_BulletEntityData)
         end
 
         if l_Instance.instanceGuid == Guid('5FA66B8C-BE0E-3758-7DE9-533EA42F5364') then

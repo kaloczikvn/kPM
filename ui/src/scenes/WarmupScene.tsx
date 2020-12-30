@@ -1,4 +1,5 @@
 import React from "react";
+import { useLang } from "../context/Lang";
 import { Player, Players } from "../helpers/Player";
 
 import './WarmupScene.scss';
@@ -10,6 +11,8 @@ interface Props {
 }
 
 const WarmupScene: React.FC<Props> = ({ rupProgress, clientPlayer }) => {
+    const { t } = useLang();
+    
     return (
         <>
             <div id="pageWarmup" className="page">
@@ -17,11 +20,11 @@ const WarmupScene: React.FC<Props> = ({ rupProgress, clientPlayer }) => {
                 <div id="tutorial">
                     <div className="keyHolder keyF9">
                         <span>F9</span>
-                        <h3>Teams</h3>
+                        <h3>{t('teams')}</h3>
                     </div>
                     <div className="keyHolder keyF10">
                         <span>F10</span>
-                        <h3>Loadouts</h3>
+                        <h3>{t('loadouts')}</h3>
                     </div>
                 </div>
 
@@ -30,13 +33,13 @@ const WarmupScene: React.FC<Props> = ({ rupProgress, clientPlayer }) => {
                     {(clientPlayer !== undefined && clientPlayer.isReady)
                     ?
                         <>
-                            <h1>You are ready!</h1>
-                            <h3>Hold <span className="key">{"{Interact}"}</span> to Un-Ready.</h3>
+                            <h1>{t('youAreReady')}</h1>
+                            <h3>{t('holdInteractToNotReady')}</h3>
                         </>
                     :
                         <>
-                            <h1>You are not ready!</h1>
-                            <h3>Hold <span className="key">{"{Interact}"}</span> to Ready-Up.</h3>
+                            <h1>{t('youAreNotReady')}</h1>
+                            <h3>{t('holdInteractToReady')}</h3>
                         </>
                     }
                 </div>

@@ -178,6 +178,12 @@ h6 {
     &.disabled {
         opacity: .4;
     }
+
+    span.info {
+        font-size: 0.725vw;
+        opacity: 0.6;
+        margin-left: 0.25vw;
+    }
 }
 
 .infoBox {

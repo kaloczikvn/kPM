@@ -1,4 +1,5 @@
 import React from "react";
+import { useLang } from "../context/Lang";
 
 interface Props {
     plantProgress: number;
@@ -6,6 +7,8 @@ interface Props {
 }
 
 const PlantOrDefuseProgress: React.FC<Props> = ({ plantProgress, plantOrDefuse }) => {
+    const { t } = useLang();
+    
     return (
         <>
             {plantProgress > 0 &&
@@ -17,11 +20,11 @@ const PlantOrDefuseProgress: React.FC<Props> = ({ plantProgress, plantOrDefuse }
                         {(plantOrDefuse === "plant")
                         ?
                             <>
-                                <h1>PLANTING</h1>
+                                <h1>{t('planting')}</h1>
                             </>
                         :
                             <>
-                                <h1>DEFUSING</h1>
+                                <h1>{t('defusing')}</h1>
                             </>
                         }
                     </div>
