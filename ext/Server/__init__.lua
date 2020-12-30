@@ -246,6 +246,11 @@ function kPMServer:OnPlayerConnected(p_Player)
     if self.m_GameState == GameStates.FirstHalf or self.m_GameState == GameStates.SecondHalf then
         self:SetClientTimer(kPMConfig.MaxRoundTime - self.m_Match.m_UpdateTicks[self.m_GameState], p_Player)
     end
+
+    local s_PlayerCount = PlayerManager:GetPlayerCount()
+    if self.m_GameState == GameStates.None and s_PlayerCount >= kPMConfig.MinPlayerCount then
+        self:ChangeGameState(GameStates.Warmup)
+    end
 end
 
 function kPMServer:OnPlayerLeft(p_Player)
