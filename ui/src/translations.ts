@@ -177,7 +177,7 @@ export var translations:any = {
         'Pre-Round': '回合准备阶段',
         'Knife': '小刀',
         'First Half': '上半场',
-        'Round {round}': '回合（回合）',
+        'Round {round}': '回合 {round}',
         'Half-Time': '半场',
         'Second Half': '下半场',
         'Timeout': '暂停',
