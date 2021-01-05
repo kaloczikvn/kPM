@@ -321,7 +321,7 @@ const App: React.FC = () => {
             if (translations['en'][key] !== undefined) {
                 return translations['en'][key];
             } else {
-                return '';
+                return key;
             }
         }
     }
@@ -396,6 +396,7 @@ const App: React.FC = () => {
                     <LoadoutScene
                         show={showLoadoutPage}
                         setShowLoadoutPage={(show) => setShowLoadoutPage(show)}
+                        gameType={gameType}
                     />
                     <Scoreboard 
                         showScoreboard={showScoreboard}

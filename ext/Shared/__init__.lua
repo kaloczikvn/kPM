@@ -4,6 +4,7 @@ require("__shared/MapsConfig")
 require("__shared/LevelNameHelper")
 require("__shared/WeaponModifier")
 require("__shared/Generators/MapMarkerEntityDataGenerator")
+require("__shared/Generators/PropertyConnectionsGenerator")
 
 function kPMShared:__init()
     print("shared initialization")
@@ -50,7 +51,9 @@ function kPMShared:RegisterEvents()
 end
 
 function kPMShared:OnLevelLoadResources()
-    ResourceManager:MountSuperBundle('Levels/COOP_010/COOP_010')
+    if SharedUtils:GetLevelName() ~= 'Levels/MP_012/MP_012' then
+        ResourceManager:MountSuperBundle('Levels/MP_012/MP_012')
+    end
 end
 
 function kPMShared:UnregisterEvents()
@@ -216,13 +219,18 @@ function kPMShared:RegisterHooks()
 
     Hooks:Install('ResourceManager:LoadBundles', 100, function(hook, bundles, compartment)
         if #bundles == 1 and bundles[1] == SharedUtils:GetLevelName() then
-            bundles = {
-                bundles[1],
-                'Levels/COOP_010/COOP_010',
-                'Levels/COOP_010/AB01_Parent',
-                'Levels/COOP_010/AB01_Art_Parent',
-                'Levels/COOP_010/AB06_Parent',
-            }
+            if SharedUtils:GetLevelName() == 'Levels/MP_012/MP_012' then
+                bundles = {
+                    bundles[1],
+                    'Levels/MP_012/TutorialMP',
+                }
+            else
+                bundles = {
+                    bundles[1],
+                    'Levels/MP_012/MP_012',
+                    'Levels/MP_012/TutorialMP',
+                }
+            end
             
             hook:Pass(bundles, compartment)
         end
@@ -251,7 +259,7 @@ function kPMShared:SpawnPlant(p_Trans, p_Id)
 end
 
 function kPMShared:SpawnPlantObjects(p_Trans)
-    local l_PlantBp = ResourceManager:SearchForDataContainer('Objects/VendingMachine_01/VendingMachine_01')
+    local l_PlantBp = ResourceManager:SearchForDataContainer('Props/MilitaryProps/CapturePoint_01/CapturePointComputer_01')
 
 	if l_PlantBp == nil then
 		error('err: could not find the plant blueprint.')
@@ -277,7 +285,12 @@ end
 
 function kPMShared:SpawnIconEntities(p_Trans, p_Id)
     local s_CustomMapMarkerEntityData = nil
-    print("SpawnIconEntities: "..p_Id)
+
+    if kPMConfig.DebugMode then
+        print("SpawnIconEntities: "..p_Id)
+    end
+
+    
     if p_Id == "A" then
         s_CustomMapMarkerEntityData = MapMarkerEntityData(ResourceManager:SearchForInstanceByGuid(self.m_CustomMapMarkerEntityAGuid))
     elseif p_Id == "B" then
@@ -296,6 +309,19 @@ function kPMShared:SpawnIconEntities(p_Trans, p_Id)
     else
         print('err: s_CustomMapMarkerEntityData - could not spawn icon.')
     end
+
+    --[[
+    local s_PropertyConnection = PropertyConnectionsGenerator:Create(
+        ResourceManager:SearchForInstanceByGuid(Guid('60425693-6BA0-412D-A565-28ACAAA5E127')),
+        s_CustomMapMarkerEntityData,
+        -501687874,
+        -2024647575
+    )
+
+    local s_FullTdm = DataBusData(ResourceManager:SearchForInstanceByGuid(Guid('5E64B049-3FE1-8A8B-4D16-99435672C9BC')))
+    s_FullTdm:MakeWritable()
+    s_FullTdm.propertyConnections:add(s_PropertyConnection)
+    ]]
 end
 
 return kPMShared()

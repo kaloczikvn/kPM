@@ -36,7 +36,7 @@ MapsConfig =
                 Vec3(0, 0, 1), 
                 Vec3(-299.7861328125, 70.434371948242, 262.5673828125)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
     
         PLANT_B = {
@@ -46,7 +46,7 @@ MapsConfig =
                 Vec3(0, 0, 1), 
                 Vec3(-341.6533203125, 71.388473510742, 297.3525390625)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         EFFECTS_WORLD_PART_DATA = {
@@ -101,7 +101,7 @@ MapsConfig =
                 Vec3(0.018137, 0.000000, -0.999835), 
                 Vec3(-83.863281, 74.112137, -110.533203)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         PLANT_B = {
@@ -111,7 +111,7 @@ MapsConfig =
                 Vec3(-0.009812, 0.000000, -0.999952), 
                 Vec3(-172.558594, 74.147263, -102.601563)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         EFFECTS_WORLD_PART_DATA = {
@@ -162,7 +162,7 @@ MapsConfig =
                 Vec3(-0.010872, 0.000000, 0.999941), 
                 Vec3(-321.995117, 78.935349, -47.129883)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         PLANT_B = {
@@ -172,7 +172,7 @@ MapsConfig =
                 Vec3(0.039217, 0.000000, -0.999231), 
                 Vec3(-428.265625, 68.372849, -49.596680)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         EFFECTS_WORLD_PART_DATA = nil,
@@ -219,7 +219,7 @@ MapsConfig =
                 Vec3(-0.955063, 0.000000, 0.296402), 
                 Vec3(81.409180, 1.430469, -83.565430)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         PLANT_B = {
@@ -229,7 +229,7 @@ MapsConfig =
                 Vec3(-0.999052, 0.000000, 0.043538), 
                 Vec3(97.465820, 1.280078, -35.783203)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         EFFECTS_WORLD_PART_DATA = {
@@ -282,7 +282,7 @@ MapsConfig =
                  Vec3(0.000000, 0.000000, 1.000000),
                  Vec3(-28.112072, 15.359532, -7.855171)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
     
         PLANT_B = {
@@ -292,7 +292,7 @@ MapsConfig =
                 Vec3(0.000000, 0.000000, 1.000000), 
                 Vec3(9.191643, 10.879999, 28.311581)
             ),
-            RADIUS = 5,
+            RADIUS = 3,
         },
 
         EFFECTS_WORLD_PART_DATA = nil,

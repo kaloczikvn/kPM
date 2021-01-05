@@ -222,7 +222,9 @@ end
 
 function kPMServer:OnPlayerJoining(p_Name, p_Guid, p_IpAddress, p_AccountGuid)
     -- Here we can send the event to whichever state we are running in
-    print("info: player " .. p_Name .. " is joining the server")
+    if kPMConfig.DebugMode then
+        print("info: player " .. p_Name .. " is joining the server")
+    end
 end
 
 function kPMServer:OnPlayerConnected(p_Player)
@@ -280,7 +282,10 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
             self.m_GameState == GameStates.None or 
             self.m_GameState == GameStates.Warmup
         then
-            print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+            if kPMConfig.DebugMode then
+                print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+            end
+            
             p_Player.teamId = p_Team;
 
             if p_Player.soldier ~= nil then
@@ -297,7 +302,9 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
             end
         else
             if p_Player.soldier == nil or not p_Player.alive then
-                print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+                if kPMConfig.DebugMode then
+                    print("Info: Player " .. p_Player.name .. " has selected " .. p_Team .." team")
+                end
                 p_Player.teamId = p_Team;
             end
         end
@@ -305,7 +312,10 @@ function kPMServer:OnPlayerSetSelectedTeam(p_Player, p_Team)
         if self.m_GameState == GameStates.None or 
             self.m_GameState == GameStates.Warmup
         then
-            print("info: player " .. p_Player.name .. " has selected " .. p_Team .." team")
+            if kPMConfig.DebugMode then
+                print("Info: Player " .. p_Player.name .. " has selected " .. p_Team .." team")
+            end
+            
             p_Player.teamId = p_Team;
 
             if p_Player.soldier ~= nil then
@@ -589,7 +599,9 @@ function kPMServer:SetupVariables()
         end
     end
 
-    print("RCON Variables Setup")
+    if kPMConfig.DebugMode then
+        print("RCON Variables Set")
+    end
 end
 
 return kPMServer()

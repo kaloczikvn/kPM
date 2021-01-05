@@ -71,10 +71,11 @@ function LoadoutManager:SetPlayerLoadout(p_Player, p_Data)
         }
     }
 
-    print("Player id: "..p_Player.id)
     NetEvents:Broadcast("kPM:UpdatePlayerLoadout", p_Player.id, p_Data["class"])
 
-    print("info: loadout saved for player: " .. p_Player.name)
+    if kPMConfig.DebugMode then
+        print("Info: Loadout saved for player: " .. p_Player.name)
+    end
 end
 
 function LoadoutManager:GetPlayerLoadout(p_Player)

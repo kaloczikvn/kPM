@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Title from "../components/Title";
+import TutorialBox from "../components/TutorialBox";
 import { useLang } from "../context/Lang";
 
 import { GameStates } from "../helpers/GameStates";
@@ -65,6 +66,9 @@ const TeamsScene: React.FC<Props> = ({ show, setSelectedTeam, gameType, players,
                         <hr/>
                         <button className={"btn border-btn disabled"}>{t('spectator')}</button>
                     </div>
+
+                    <TutorialBox gameType={gameType} />
+
                     {showAlert !== null &&
                         <div className={"infoBox"}>
                             <h1>{showAlert}</h1>

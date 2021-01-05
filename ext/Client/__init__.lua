@@ -165,7 +165,9 @@ function kPMClient:OnPartitionLoaded(p_Partition)
 end
 
 function kPMClient:UnregisterEvents()
-    print("unregistering events")
+    if kPMConfig.DebugMode then
+        print("Info: Unregistering Events")
+    end
 end
 
 function kPMClient:OnSetSelectedTeam(p_Team)
@@ -184,12 +186,16 @@ function kPMClient:OnSetSelectedTeam(p_Team)
 
         local s_AttackersCount = 0
         for index, l_Player in pairs(s_Attackers) do
-            s_AttackersCount = s_AttackersCount + 1
+            if l_Player.name ~= s_LocalPlayer.name then
+                s_AttackersCount = s_AttackersCount + 1
+            end
         end
 
         local s_DefendersCount = 0
         for index, l_Player in pairs(s_Defenders) do
-            s_DefendersCount = s_DefendersCount + 1
+            if l_Player.name ~= s_LocalPlayer.name then
+                s_DefendersCount = s_DefendersCount + 1
+            end
         end
 
         if s_AttackersCount > s_DefendersCount then
@@ -197,7 +203,8 @@ function kPMClient:OnSetSelectedTeam(p_Team)
         elseif s_AttackersCount < s_DefendersCount then
             NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_AttackersTeamId)
         else
-            NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_AttackersTeamId)
+            local s_RandomTeam = MathUtils:GetRandomInt(1, 2)
+            NetEvents:Send("kPM:PlayerSetSelectedTeam", s_RandomTeam)
         end
     elseif p_Team == 2 then -- attackers
         NetEvents:Send("kPM:PlayerSetSelectedTeam", self.m_AttackersTeamId)
@@ -246,7 +253,9 @@ function kPMClient:UnregisterCommands()
 end
 
 function kPMClient:OnLevelDestroyed()
-    print('OnLevelDestroyed')
+    if kPMConfig.DebugMode then
+        print('OnLevelDestroyed')
+    end
 
     self.m_PingTable = {}
     self.m_PlayerReadyUpPlayersTable = {}
@@ -292,7 +301,9 @@ function kPMClient:OnLevelLoaded()
 end
 
 function kPMClient:OnLevelLoadResources()
-    print('OnLevelLoadResources')
+    if kPMConfig.DebugMode then
+        print('OnLevelLoadResources')
+    end
     self.m_ExplosionEntityData = nil
 
     self.m_PlantSoundEntityData = nil
@@ -301,20 +312,6 @@ function kPMClient:OnLevelLoadResources()
 end
 
 function kPMClient:OnUpdateInput(p_DeltaTime)
-    -- Update the freecam
-    --[[if self.m_SpecCam ~= nil then
-        self.m_SpecCam:OnUpdateInput(p_DeltaTime)
-    end]]
-
-        -- Open Team menu
-        if InputManager:WentKeyDown(InputDeviceKeys.IDK_F8) then
-            local s_Player = PlayerManager:GetLocalPlayer()
-            if s_Player == nil then
-                return
-            end
-            print("Current positon: "..tostring(s_Player.soldier.worldTransform.trans))
-        end
-
     -- Open Team menu
     if InputManager:WentKeyDown(InputDeviceKeys.IDK_F9) then
         -- If the player never spawned we should force him to pick a team and a loadout first
@@ -459,7 +456,10 @@ function kPMClient:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
             if self.m_PlantOrDefuseHeldTime >= kPMConfig.PlantTime then
                 -- Send the plant event
                 NetEvents:Send("kPM:TogglePlant", "plant", s_SelectedPlant, s_Player.soldier.worldTransform.trans)
-                print("client planted")
+
+                if kPMConfig.DebugMode then
+                    print("Info: Client planted")
+                end
 
                 -- Reset our plant or defuse timer
                 self.m_PlantOrDefuseHeldTime = 0.0
@@ -472,7 +472,10 @@ function kPMClient:IsPlantingOrDefuseing(p_Hook, p_Cache, p_DeltaTime)
             if self.m_PlantOrDefuseHeldTime >= kPMConfig.DefuseTime then
                 -- Send the defuse event
                 NetEvents:Send("kPM:TogglePlant", "defuse", s_SelectedPlant)
-                print("client defused")
+
+                if kPMConfig.DebugMode then
+                    print("Info: Client defused")
+                end
 
                 -- Reset our plant or defuse timer
                 self.m_PlantOrDefuseHeldTime = 0.0
@@ -535,7 +538,10 @@ function kPMClient:OnGameStateChanged(p_OldGameState, p_GameState)
         return
     end
 
-    print("info: gamestate " .. p_OldGameState .. " -> " .. p_GameState)
+    if kPMConfig.DebugMode then
+        print("Info: gamestate " .. p_OldGameState .. " -> " .. p_GameState)
+    end
+    
     self.m_GameState = p_GameState
 
     -- Reset the bomb plant status
@@ -565,8 +571,11 @@ function kPMClient:OnGameTypeChanged(p_GameType)
         return
     end
 
-    print("info: gametype " .. p_GameType)
     self.m_GameType = p_GameType
+
+    if kPMConfig.DebugMode then
+        print("Info: gametype " .. p_GameType)
+    end
 
     -- Update the WebUI
     WebUI:ExecuteJS("ChangeType(" .. self.m_GameType .. ");")
@@ -595,7 +604,9 @@ function kPMClient:OnUpdateScoreboard(p_Player)
         return
     end
     
-    print("OnUpdateScoreboard")
+    if kPMConfig.DebugMode then
+        print("Info: OnUpdateScoreboard")
+    end
 
     local l_PlayerListDefenders = PlayerManager:GetPlayersByTeam(self.m_DefendersTeamId)
     local l_PlayerListAttackers = PlayerManager:GetPlayersByTeam(self.m_AttackersTeamId)
@@ -743,8 +754,10 @@ function kPMClient:OnBombPlanted(p_BombSite, p_BombLocation)
         return
     end
 
-    print('info: bomb has been planted on ' .. p_BombSite)
-
+    if kPMConfig.DebugMode then
+        print("Info: Bomb has been planted on " .. p_BombSite)
+    end
+    
     self.m_BombSite = p_BombSite
     self.m_BombLocation = p_BombLocation
     self:PlaceLaptop()
@@ -754,7 +767,9 @@ function kPMClient:OnBombPlanted(p_BombSite, p_BombLocation)
 end
 
 function kPMClient:OnBombDefused()
-    print('info: bomb defused')
+    if kPMConfig.DebugMode then
+        print("Info: Bomb defused")
+    end
 
     if self.m_AlarmEntity ~= nil then
         self.m_AlarmEntity:FireEvent('Stop')
@@ -855,8 +870,8 @@ function kPMClient:GetPlantSoundEntityData()
 		print('Could not find sound template')
 		return nil
     end
-
-    local s_Beep = ResourceManager:SearchForInstanceByGuid(Guid('30BDBD94-5011-4929-B714-85702A9CA53C'))
+    
+    local s_Beep = ResourceManager:SearchForInstanceByGuid(Guid('CE49348B-350A-4325-B96C-259DDD75A144'))
 
 	if s_Beep == nil then
 		print('Could not find beep template')
@@ -917,7 +932,7 @@ function kPMClient:GetPlantedSoundEntityData()
 		return nil
     end
 
-    local s_Alarm = ResourceManager:SearchForInstanceByGuid(Guid('ACF794EC-7C7E-4055-A20D-E108F61FDFF7'))
+    local s_Alarm = ResourceManager:SearchForInstanceByGuid(Guid('1DE33C67-3518-B39C-A1FA-05B6E1BB3162'))
 
 	if s_Alarm == nil then
 		print('Could not find beep template')
@@ -1020,7 +1035,9 @@ function kPMClient:OnPlayerDeleted(p_Player)
         return
     end
 
-    print('OnPlayerDeleted')
+    if kPMConfig.DebugMode then
+        print("Info: OnPlayerDeleted")
+    end
 end
 
 function kPMClient:IsPlayerInsideThePlantZone()

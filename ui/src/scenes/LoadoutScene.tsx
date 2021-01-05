@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import PromodSelect from "../components/PromodSelect";
 import Title from "../components/Title";
+import TutorialBox from "../components/TutorialBox";
 import { useLang } from "../context/Lang";
+import { GameTypes } from "../helpers/GameTypes";
 import { Kits } from "../helpers/Kits";
 
 import './LoadoutScene.scss';
@@ -18,9 +20,10 @@ interface Loadout {
 interface Props {
     show: boolean;
     setShowLoadoutPage: (show: boolean) => void;
+    gameType: GameTypes|null;
 }
 
-const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
+const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage, gameType }) => {
     const { t } = useLang();
     
     const [currentLoadout, setCurrentLoadout] = useState<Loadout>({
@@ -147,14 +150,15 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
 
         const options: Array<{value: string, label: string}> = [];
         Object.keys(weapons).forEach((value: string, key: number) => {
+            var tLabel = t(weapons[value].Name).toString();
             options.push({
                 value: value,
-                label: weapons[value].Name,
+                label: tLabel,
             });
 
             if(value === defaultIndex) {
                 defaultValue.value = value;
-                defaultValue.label = weapons[value].Name;
+                defaultValue.label = t(weapons[value].Name).toString();
             }
         });
 
@@ -187,7 +191,7 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
                     onChangeSelected={(slot: string, weapon: string) => onSelectedWeaponChange(slot, weapon)}
                     selectValue={{
                         value: value.Key,
-                        label: value.Name,
+                        label: t(value.Name),
                     }}
                 />
             </>
@@ -199,9 +203,10 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
 
         const options: Array<{value: string, label: string}> = [];
         Object.keys(attachments).forEach((value: string, key: number) => {
+            var tLabel = t(attachments[value].Name).toString();
             options.push({
                 value: value,
-                label: attachments[value].Name,
+                label: tLabel,
             });
         });
 
@@ -211,7 +216,7 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
     const getWeaponAttachmentSlot = (name: string) => {
         let value = {
             value: (currentLoadout.primaryAttachments[name] ? currentLoadout.primaryAttachments[name].Key : ''),
-            label: (currentLoadout.primaryAttachments[name] ? currentLoadout.primaryAttachments[name].Name : ''),
+            label: t(currentLoadout.primaryAttachments[name] ? currentLoadout.primaryAttachments[name].Name : ''),
         };
 
         return (
@@ -272,6 +277,9 @@ const LoadoutScene: React.FC<Props> = ({ show, setShowLoadoutPage }) => {
                             </>
                         }
                     </div>
+
+                    <TutorialBox gameType={gameType} />
+
                     <Title text={t('loadoutClose').toString()} bottom={true} />
                 </div>
             }
