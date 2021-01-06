@@ -1027,7 +1027,7 @@ end
 function Match:KillQueuedPlayers()
     for l_Index, l_PlayerName in ipairs(self.m_KillQueue) do
         if kPMConfig.DebugMode then
-            print('Info: KillQueuedPlayer: ' .. l_PlayerName),
+            print('Info: KillQueuedPlayer: ' .. l_PlayerName)
         end
 
         RCON:SendCommand('admin.killPlayer', {l_PlayerName})
@@ -1039,7 +1039,7 @@ function Match:SpawnQueuedPlayers()
     for l_Index, l_Spawn in ipairs(self.m_SpawnQueue) do
         if not TableHelper:contains(self.m_KillQueue, l_Spawn["p_Player"].name) then
             if kPMConfig.DebugMode then
-                print('Info: SpawnQueuedPlayer: ' .. l_Spawn["p_Player"].name),
+                print('Info: SpawnQueuedPlayer: ' .. l_Spawn["p_Player"].name)
             end
 
             self:SpawnPlayer(
@@ -1086,7 +1086,7 @@ end
 
 function Match:AddPlayerToSpawnQueue(p_Player, p_Transform, p_Pose, p_SoldierBp, p_KnifeOnly, p_SelectedKit)
     if kPMConfig.DebugMode then
-        print('Info: AddPlayerToSpawnQueue: ' .. p_Player.name),
+        print('Info: AddPlayerToSpawnQueue: ' .. p_Player.name)
     end
 
     table.insert(self.m_SpawnQueue, {
@@ -1101,7 +1101,7 @@ end
 
 function Match:AddPlayerToKillQueue(p_PlayerName)
     if kPMConfig.DebugMode then
-        print('Info: AddPlayerToKillQueue: ' .. p_PlayerName),
+        print('Info: AddPlayerToKillQueue: ' .. p_PlayerName)
     end
     
     table.insert(self.m_KillQueue, p_PlayerName)
