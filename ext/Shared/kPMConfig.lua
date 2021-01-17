@@ -54,10 +54,10 @@ kPMConfig =
     MaxTransititionTime = 5.0,
 
     -- Round time (default: 10 minutes)
-    MaxRoundTime = 240.0,
+    MaxRoundTime = 120.0,
 
     -- Game end time (default: 20 sec)
-    MaxEndgameTime = 20.0,
+    MaxEndgameTime = 15.0,
 
     -- Squad size
     SquadSize = 24,
@@ -66,7 +66,7 @@ kPMConfig =
     GameType = GameTypes.Public,
 
     -- Bomb related stuff
-    BombRadius = 1.5,
+    BombRadius = 2.5,
     BombTime = 60.0,
     PlantTime = 5.0,
     DefuseTime = 5.0,

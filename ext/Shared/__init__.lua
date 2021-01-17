@@ -87,11 +87,15 @@ end
 function kPMShared:OnLevelLoaded(p_LevelName, p_GameMode)
     self:SpawnPlants()
     
+    --[[
+    -- TODO: Add weapon modifications
     for i, l_Instance in pairs(self.m_SoldierWeaponBlueprints) do
         WeaponModifier:ModifyWeaponInstance(l_Instance)
     end
+    ]]
     self.m_SoldierWeaponBlueprints = { }
 
+    -- Thanks to https://github.com/FlashHit/VU-Mods/tree/master/headShotDamageModifier
     local s_MaterialGrid = MaterialGridData(ResourceManager:SearchForDataContainer(SharedUtils:GetLevelName() .. "/MaterialGrid_Win32/Grid"))        
     for i, l_Instance in pairs(self.m_BulletEntityDatas) do
         if l_Instance.materialPair ~= nil and l_Instance.materialPair.physicsPropertyIndex ~= nil and s_MaterialGrid.materialIndexMap[l_Instance.materialPair.physicsPropertyIndex+1] ~= nil then

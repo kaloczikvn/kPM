@@ -88,8 +88,7 @@ end
 --------------Linear Transform variants-------
 function RotationHelper:GetYPRFromLT(linearTransform)
 	if linearTransform.typeInfo.name == nil or linearTransform.typeInfo.name ~= "LinearTransform" then
-		m_Logger:Write("Wrong argument, expected LinearTransform")
-
+		--m_Logger:Write("Wrong argument, expected LinearTransform")
 		return
 	end
 

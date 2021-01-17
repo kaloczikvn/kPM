@@ -43,7 +43,7 @@ function MapMarkerEntityDataGenerator:Create(p_EntityGuid, p_Site)
         Vec3(1, 0, 0),
         Vec3(0, 1, 0),
         Vec3(0, 0, 1),
-        Vec3(0, 6.4, 0)
+        Vec3(0, 3.4, 0)
     )
 
     return s_EntityData

@@ -3,15 +3,29 @@ class('IngameSpectator')
 function IngameSpectator:__init()
 	self._allowSpectateAll = false
 	self._spectatedPlayer = nil
-	self._firstPerson = true
-	self._freecamTrans = LinearTransform()
 
-	-- TODO: Third person camera
+	self._distance = -0.85
+	self._height = 1.8
+	self._data = nil
+	self._entity = nil
+	self._active = false
+	self._lookAtPos = nil
 
 	Events:Subscribe('Extension:Unloading', self, self.disable)
 	Events:Subscribe('Player:Respawn', self, self._onPlayerRespawn)
 	Events:Subscribe('Player:Killed', self, self._onPlayerKilled)
 	Events:Subscribe('Player:Deleted', self, self._onPlayerDeleted)
+	Events:Subscribe('Level:Destroy', self, self.disable)
+
+	Events:Subscribe('Engine:Update', self, self._onUpdate)
+
+	self.m_PlayersPitchAndYaw = { }
+
+	NetEvents:Subscribe("kPM:PlayersPitchAndYaw", self, self._onPlayersPitchAndYaw)
+end
+
+function IngameSpectator:_onPlayersPitchAndYaw(p_PitchAndYaw)
+	self.m_PlayersPitchAndYaw = p_PitchAndYaw
 end
 
 function IngameSpectator:_onPlayerRespawn(player)
@@ -92,61 +106,6 @@ function IngameSpectator:_findFirstPlayerToSpectate()
 	return playerToSpectate
 end
 
-function IngameSpectator:getFreecamTransform()
-	return self._freecamTrans
-end
-
-function IngameSpectator:setFreecamTransform(trans)
-	self._freecamTrans = trans
-
-	if self:isEnabled() and self._spectatedPlayer == nil then
-		SpectatorManager:SetFreecameraTransform(self._freecamTrans)
-	end
-end
-
-function IngameSpectator:getAllowSpectateAll()
-	return self._allowSpectateAll
-end
-
-function IngameSpectator:setAllowSpectateAll(allowSpectateAll)
-	local prevSpectateAll = self._allowSpectateAll
-	self._allowSpectateAll = allowSpectateAll
-
-	-- If we no longer allow spectating everyone we will need to make sure
-	-- that the player we're currently spectating is in the same team as us.
-	if prevSpectateAll ~= allowSpectateAll and self:isEnabled() and not allowSpectateAll then
-		local localPlayer = PlayerManager:GetLocalPlayer()
-
-		-- If they're not we'll try to find one we can spectate and switch
-		-- to them. If we can't, we'll just switch to freecam.
-		if localPlayer.teamId ~= self._spectatedPlayer.teamId then
-			local playerToSpectate = self:_findFirstPlayerToSpectate()
-
-			if playerToSpectate == nil then
-				self:switchToFreecam()
-			else
-				self:spectatePlayer(playerToSpectate)
-			end
-		end
-	end
-end
-
-function IngameSpectator:getFirstPerson()
-	return self._firstPerson
-end
-
-function IngameSpectator:setFirstPerson(firstPerson)
-	local prevFirstPerson = self._firstPerson
-	self._firstPerson = firstPerson
-
-	-- If we're enabled and we switched modes then we also need to switch
-	-- spectating modes. We do this just by calling the spectatePlayer
-	-- function and it should handle the rest automatically.
-	if prevFirstPerson ~= firstPerson and self:isEnabled() and self._spectatedPlayer ~= nil then
-		self:spectatePlayer(self._spectatedPlayer)
-	end
-end
-
 function IngameSpectator:enable()
 	if not kPMConfig.SpectatorEnabled then
 		return
@@ -163,7 +122,8 @@ function IngameSpectator:enable()
 		return
 	end
 
-	SpectatorManager:SetSpectating(true)
+	self:_createCamera()
+	self:_takeControl()
 
 	local playerToSpectate = self:_findFirstPlayerToSpectate()
 
@@ -175,7 +135,7 @@ function IngameSpectator:enable()
 	end
 
 	-- If we found no player to spectate then just do freecam.
-	self:switchToFreecam()
+	self:disable()
 end
 
 function IngameSpectator:disable()
@@ -190,39 +150,96 @@ function IngameSpectator:disable()
     WebUI:ExecuteJS('SpectatorTarget("");')
     WebUI:ExecuteJS('SpectatorEnabled('.. tostring(false) .. ');')
 
-	SpectatorManager:SetSpectating(false)
-
 	self._spectatedPlayer = nil
+
+	self:_releaseControl()
+	self:_destroyCamera()
 end
 
-function IngameSpectator:spectatePlayer(player)
+function IngameSpectator:_destroyCamera()
+	if self._entity == nil then
+		return
+	end
+
+	-- Destroy the camera entity.
+	self._entity:Destroy()
+	self._entity = nil
+	self._lookAtPos = nil
+end
+
+function IngameSpectator:_takeControl()
+	-- By firing the "TakeControl" event on the camera entity we make the
+	-- current player switch to this camera from their first person camera.
+	self._active = true
+	self._entity:FireEvent('TakeControl')
+end
+
+
+function IngameSpectator:_releaseControl()
+	-- By firing the "ReleaseControl" event on the camera entity we return
+	-- the player to whatever camera they were supposed to be using.
+	self._active = false
+
+	if self._entity ~= nil then
+		self._entity:FireEvent('ReleaseControl')
+	end
+end
+
+function IngameSpectator:_createCameraData()
+	if self._data ~= nil then
+		return
+	end
+
+	-- Create data for our camera entity.
+	-- We set the priority very high so our game gets forced to use this camera.
+	self._data = CameraEntityData()
+	self._data.fov = 80
+	self._data.enabled = true
+	self._data.priority = 99999
+	self._data.nameId = 'promod-spec-cam'
+	self._data.transform = LinearTransform()
+end
+
+function IngameSpectator:_createCamera()
+	if self._entity ~= nil then
+		return
+	end
+
+	-- First ensure that we have create our camera data.
+	self:_createCameraData()
+
+	-- And then create the camera entity.
+	self._entity = EntityManager:CreateEntity(self._data, self._data.transform)
+	self._entity:Init(Realm.Realm_Client, true)
+end
+
+function IngameSpectator:spectatePlayer(p_Player)
 	if not self:isEnabled() then
 		return
 	end
 
-	if player == nil then
-		self:switchToFreecam()
+	if p_Player == nil then
+		self:disable()
 		return
 	end
 
-	local localPlayer = PlayerManager:GetLocalPlayer()
+	local s_LocalPlayer = PlayerManager:GetLocalPlayer()
 
 	-- We can't spectate the local player.
-	if localPlayer == player then
+	if s_LocalPlayer == p_Player then
 		return
 	end
 
 	-- If we don't allow spectating everyone make sure that this player
 	-- is in the same team as the local player.
-	if not self._allowSpectateAll and localPlayer.teamId ~= player.teamId then
+	if not self._allowSpectateAll and s_LocalPlayer.teamId ~= p_Player.teamId then
 		return
 	end
 
-	print('Spectating player')
-	print(player)
+	print('Spectating player' .. p_Player.name)
 
-	self._spectatedPlayer = player
-	SpectatorManager:SpectatePlayer(self._spectatedPlayer, self._firstPerson)
+	self._spectatedPlayer = p_Player
+	--SpectatorManager:SpectatePlayer(self._spectatedPlayer, self._firstPerson)
 end
 
 function IngameSpectator:spectateNextPlayer()
@@ -284,7 +301,7 @@ function IngameSpectator:spectateNextPlayer()
 
 	-- If we didn't find any players to spectate then switch to freecam.
 	if nextPlayer == nil then
-		self:switchToFreecam()
+		self:disable()
 	else
 		WebUI:ExecuteJS('SpectatorTarget("'.. tostring(nextPlayer.name) .. '");')
 		self:spectatePlayer(nextPlayer)
@@ -350,28 +367,75 @@ function IngameSpectator:spectatePreviousPlayer()
 
 	-- If we didn't find any players to spectate then switch to freecam.
 	if nextPlayer == nil then
-		self:switchToFreecam()
+		self:disable()
 	else
 		WebUI:ExecuteJS('SpectatorTarget("'.. tostring(nextPlayer.name) .. '");')
 		self:spectatePlayer(nextPlayer)
 	end
 end
 
-function IngameSpectator:switchToFreecam()
+function IngameSpectator:isEnabled()
+	return self._active
+end
+
+function IngameSpectator:_onUpdate()
 	if not self:isEnabled() then
 		return
 	end
 
-	print('Switching to freecam.')
+	-- Don't update if we don't have a player with an alive soldier.
+	local player = self._spectatedPlayer
 
-	self._spectatedPlayer = nil
+	if player == nil or player.soldier == nil or player.id == nil then
+		return
+	end
 
-	SpectatorManager:SetCameraMode(SpectatorCameraMode.FreeCamera)
-	SpectatorManager:SetFreecameraTransform(self._freecamTrans)
-end
+	if self.m_PlayersPitchAndYaw[player.id] == nil then
+		return
+	end
+	
+	-- Get the soldier's aiming angles.
+	--local yaw = -math.atan(player.soldier.worldTransform.forward.x, player.soldier.worldTransform.forward.z)
+	--local pitch = 0.0
+	local yaw = self.m_PlayersPitchAndYaw[player.id]["Yaw"]
+	local pitch = self.m_PlayersPitchAndYaw[player.id]["Pitch"]
 
-function IngameSpectator:isEnabled()
-	return SpectatorManager:GetSpectating()
+	--[[print("weaponTransform :")
+	print(player.soldier.weaponsComponent.weaponTransform)
+
+	print("currentWeaponSlot:")
+	print(player.soldier.weaponsComponent.currentWeaponSlot)
+
+	print("weapons:")
+	print(player.soldier.weaponsComponent.weapons)
+
+	print("currentWeapon:")
+	print(player.soldier.weaponsComponent.currentWeapon)]]
+
+	-- Fix angles so we're looking at the right thing.
+	yaw = yaw - math.pi / 2
+	pitch = pitch + math.pi / 2
+
+	-- Set the look at position above the soldier's feet.
+	self._lookAtPos = player.soldier.transform.trans:Clone()
+	self._lookAtPos.y = self._lookAtPos.y + self._height
+
+	-- Calculate where our camera has to be base on the angles.
+	local cosfi = math.cos(yaw)
+	local sinfi = math.sin(yaw)
+
+	local costheta = math.cos(pitch)
+	local sintheta = math.sin(pitch)
+
+	local cx = self._lookAtPos.x + (self._distance * sintheta * cosfi)
+	local cy = self._lookAtPos.y + (self._distance * costheta)
+	local cz = self._lookAtPos.z + (self._distance * sintheta * sinfi)
+
+	local cameraLocation = Vec3(cx, cy, cz)
+
+	self._data.transform:LookAtTransform(cameraLocation, self._lookAtPos)
+	--self._data.transform.left = self._data.transform.left * -1
+	--self._data.transform.forward = self._data.transform.forward * -1
 end
 
 if g_IngameSpectator == nil then

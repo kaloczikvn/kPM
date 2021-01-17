@@ -757,11 +757,17 @@ function kPMClient:OnBombPlanted(p_BombSite, p_BombLocation)
     if kPMConfig.DebugMode then
         print("Info: Bomb has been planted on " .. p_BombSite)
     end
+
+    local s_LevelName = LevelNameHelper:GetLevelName()
+    if s_LevelName == nil then
+        return
+    end
     
     self.m_BombSite = p_BombSite
-    self.m_BombLocation = p_BombLocation
-    self:PlaceLaptop()
+    --self.p_BombLocation = p_BombLocation
+    self.m_BombLocation = MapsConfig[s_LevelName]["PLANT_"..p_BombSite]["POS"].trans
     self:OnPlaySoundPlanted(p_BombLocation)
+    self:PlaceLaptop()
 
     WebUI:ExecuteJS('BombPlanted("' .. p_BombSite .. '");')
 end
@@ -802,7 +808,12 @@ function kPMClient:OnBombKaboom()
     end 
     
 	s_Entity = ExplosionEntity(s_Entity)
-	s_Entity:Detonate(s_Transform, Vec3(0, 1, 0), 1.0, nil)
+    s_Entity:Detonate(s_Transform, Vec3(0, 1, 0), 1.0, nil)
+    
+    if self.m_AlarmEntity ~= nil then
+        self.m_AlarmEntity:FireEvent('Stop')
+        self.m_AlarmEntity = nil
+    end
 end
 
 function kPMClient:GetExplosionEntityData()
@@ -912,7 +923,6 @@ function kPMClient:OnPlaySoundPlanted(p_Trans)
     end
 
     if self.m_AlarmEntity ~= nil then
-        self.m_AlarmEntity:Destory()
         self.m_AlarmEntity = nil
     end
 
@@ -1166,23 +1176,37 @@ function kPMClient:GetKit(p_Player)
 end
 
 function kPMClient:PlaceLaptop()
-    local s_PlantBp = ResourceManager:SearchForDataContainer('Objects/Laptop_01/Laptop_01')
+    --[[local s_PlantBp = ResourceManager:SearchForDataContainer('Props/MilitaryProps/CapturePoint_01/Capture_BlinkingLight')
 
 	if s_PlantBp == nil then
 		error('err: could not find the plant blueprint.')
 		return
-    end
+    end]]
     
 	local s_Params = EntityCreationParams()
-	s_Params.transform.trans = self.m_BombLocation
-	s_Params.networked = false
+    s_Params.transform.trans = self.m_BombLocation
+    s_Params.transform.trans.y = s_Params.transform.trans.y + 3.4
+    s_Params.networked = false
+    
+    local s_EntityData = PointLightEntityData()
+    s_EntityData.color = Vec3(1.0, 0.0, 0.0)
+    s_EntityData.radius = 20.0
+    s_EntityData.intensity = 2.5
+    s_EntityData.visible = true
+    s_EntityData.enlightenEnable = true
+    s_EntityData.translucencyAmbient = 0
+    s_EntityData.translucencyScale = 0
+    s_EntityData.translucencyPower = 0
+    s_EntityData.translucencyDistortion = 0.0
 
-    local s_Bus = EntityManager:CreateEntitiesFromBlueprint(s_PlantBp, s_Params)
+    local s_Bus = EntityManager:CreateEntity(s_EntityData, s_Params)
+    --local s_Bus = EntityManager:CreateEntitiesFromBlueprint(s_PlantBp, s_Params)
 
     if s_Bus ~= nil then
-        for _, entity in pairs(s_Bus.entities) do
+        --[[for _, entity in pairs(s_Bus.entities) do
             entity:Init(Realm.Realm_Client, true)
-        end
+        end]]
+        s_Bus:Init(Realm.Realm_ClientAndServer, true)
 
         self.m_LaptopEntity = s_Bus
     else
@@ -1196,11 +1220,14 @@ function kPMClient:DestroyLaptop()
         return
     end
 
-    for _, entity in pairs(self.m_LaptopEntity.entities) do
+    --[[for _, entity in pairs(self.m_LaptopEntity.entities) do
         if entity ~= nil then
             entity:Destroy()
         end 
-    end
+    end]]
+    if self.m_LaptopEntity ~= nil then
+        self.m_LaptopEntity:Destroy()
+    end 
 
     self.m_LaptopEntity = nil
 end

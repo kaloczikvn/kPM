@@ -41,6 +41,8 @@ function kPMServer:__init()
     -- Callbacks
     self.m_MatchStateCallbacks = { }
 
+    self.m_PlayersPitchAndYaw = { }
+
     ServerUtils:SetCustomGameModeName("Promod")
 end
 
@@ -154,6 +156,29 @@ function kPMServer:OnEngineUpdate(p_DeltaTime, p_SimulationDeltaTime)
         end
     end
     self.m_NameTick = self.m_NameTick + p_DeltaTime
+
+    self:GetPlayersPitchAndYaw()
+end
+
+function kPMServer:GetPlayersPitchAndYaw()
+    self.m_PlayersPitchAndYaw = { }
+
+    local s_Players = PlayerManager:GetPlayers()
+    for l_Index, l_Player in ipairs(s_Players) do
+        if l_Player == nil and l_Player.alive == false then
+            goto update_allowed_guids_continue
+        end
+
+        self.m_PlayersPitchAndYaw[l_Player.id] = {
+            Yaw = l_Player.input.authoritativeAimingYaw,
+            Pitch = l_Player.input.authoritativeAimingPitch,
+            Camera = l_Player.input.authoritativeCameraPosition,
+        }
+
+        ::update_allowed_guids_continue::
+    end
+    
+    NetEvents:BroadcastUnreliable("kPM:PlayersPitchAndYaw", self.m_PlayersPitchAndYaw)
 end
 
 function kPMServer:OnPlayerRequestJoin(p_Hook, p_JoinMode, p_AccountGuid, p_PlayerGuid, p_PlayerName)
