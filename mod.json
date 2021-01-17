@@ -3,7 +3,7 @@
     "Description": "Promod for competitive Battlefield 3 experience.",
     "Authors": [ "kiwidog", "KVN" ],
     "Tags": [ "promod" ],
-    "Version": "0.7.0",
+    "Version": "0.9.0",
     "HasVeniceEXT": true,
     "HasWebUI": true,
     "Dependencies": {
